@@ -18,8 +18,9 @@ http.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
+    const esLlamadaDeRefresh = originalRequest?.url?.includes('/api/auth/refresh');
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    if (error.response?.status === 401 && !originalRequest._retry && !esLlamadaDeRefresh) {
       originalRequest._retry = true;
       try {
         if (!refreshing) {
