@@ -5,7 +5,9 @@ export function rutaPorRol(rol: string | null): string {
       return '/director';
     case 'ADMIN':
       return '/admin';
+    case 'ESTUDIANTE':
+      return '/estudiante';
     default:
-      return '/admin'; // DOCENTE, TUTOR, ESTUDIANTE: pendiente layouts propios
+      return '/admin'; // DOCENTE, TUTOR: pendiente layouts propios
   }
 }
