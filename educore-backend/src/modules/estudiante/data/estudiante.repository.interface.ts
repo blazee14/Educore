@@ -18,6 +18,30 @@ export interface IEstudianteRepository {
   listarTodos(): Promise<Estudiante[]>;
   actualizar(id: string, data: Partial<CrearEstudianteData>): Promise<Estudiante>;
   eliminar(id: string): Promise<void>;
+  listarConDetalle(): Promise<EstudianteConDetalle[]>;
+  buscarDetallePorId(id: string): Promise<EstudianteConDetalle | null>;
 }
 
 export const ESTUDIANTE_REPOSITORY = 'ESTUDIANTE_REPOSITORY';
+
+export interface TutorResumen {
+  id: string;
+  email: string;
+  nombres: string;
+  apellidos: string;
+  telefono: string | null;
+  parentesco: string;
+}
+
+export interface EstudianteConDetalle {
+  id: string;
+  usuarioId: string;
+  email: string;
+  nombres: string;
+  apellidos: string;
+  dni: string;
+  fechaNacimiento: Date;
+  gradoNombre: string | null;
+  seccionNombre: string | null;
+  tutores: TutorResumen[];
+}

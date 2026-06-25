@@ -2,29 +2,25 @@
 import { useEffect, useState } from 'react';
 import {
   listarEstudiantes,
-  crearEstudiante,
-  eliminarEstudiante,
-  type Estudiante,
-  type CrearEstudianteInput,
+  actualizarEstudiante,
+  resetearPasswordEstudiante,
+  type EstudianteConDetalle,
+  type ActualizarEstudianteInput,
+  type ResetPasswordResultado,
 } from '../../api/estudiante.api';
+import { resetearPasswordTutor } from '../../api/tutor.api';
 
 export function EstudiantesPage() {
-  const [estudiantes, setEstudiantes] = useState<Estudiante[]>([]);
+  const [estudiantes, setEstudiantes] = useState<EstudianteConDetalle[]>([]);
   const [cargando, setCargando] = useState(true);
-  const [mostrarForm, setMostrarForm] = useState(false);
-  const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [aEliminar, setAEliminar] = useState<Estudiante | null>(null);
-  const [eliminando, setEliminando] = useState(false);
+  const [editando, setEditando] = useState<EstudianteConDetalle | null>(null);
+  const [form, setForm] = useState<ActualizarEstudianteInput>({});
+  const [guardando, setGuardando] = useState(false);
+  const [resetResultado, setResetResultado] = useState<ResetPasswordResultado | null>(null);
+  const [aResetear, setAResetear] = useState<{ tipo: 'estudiante' | 'tutor'; id: string; nombre: string } | null>(null);
+  const [reseteando, setReseteando] = useState<string | null>(null);
 
-  const [form, setForm] = useState<CrearEstudianteInput>({
-    email: '',
-    password: '',
-    nombres: '',
-    apellidos: '',
-    dni: '',
-    fechaNacimiento: '',
-  });
 
   async function cargar() {
     setCargando(true);
@@ -42,78 +38,55 @@ export function EstudiantesPage() {
     cargar();
   }, []);
 
-  async function handleSubmit(e: React.FormEvent) {
+  function abrirEdicion(est: EstudianteConDetalle) {
+    setEditando(est);
+    setForm({
+      nombres: est.nombres,
+      apellidos: est.apellidos,
+      dni: est.dni,
+      fechaNacimiento: est.fechaNacimiento.slice(0, 10),
+    });
+  }
+
+  async function handleGuardar(e: React.FormEvent) {
     e.preventDefault();
-    setEnviando(true);
+    if (!editando) return;
+    setGuardando(true);
     setError(null);
     try {
-      await crearEstudiante(form);
-      setForm({ email: '', password: '', nombres: '', apellidos: '', dni: '', fechaNacimiento: '' });
-      setMostrarForm(false);
+      await actualizarEstudiante(editando.id, form);
+      setEditando(null);
       await cargar();
     } catch (err: any) {
-      setError(err?.response?.data?.message ?? 'Error al crear el estudiante');
+      setError(err?.response?.data?.message ?? 'Error al actualizar el estudiante');
     } finally {
-      setEnviando(false);
+      setGuardando(false);
     }
   }
 
-  async function confirmarEliminar() {
-    if (!aEliminar) return;
-    setEliminando(true);
-    try {
-      await eliminarEstudiante(aEliminar.id);
-      setAEliminar(null);
-      await cargar();
-    } catch {
-      setError('No se pudo eliminar el estudiante');
-      setAEliminar(null);
-    } finally {
-      setEliminando(false);
-    }
+  async function confirmarReset() {
+  if (!aResetear) return;
+  setReseteando(aResetear.id);
+  setError(null);
+  try {
+    const resultado = aResetear.tipo === 'estudiante'
+      ? await resetearPasswordEstudiante(aResetear.id)
+      : await resetearPasswordTutor(aResetear.id);
+    setResetResultado(resultado);
+  } catch {
+    setError('No se pudo restablecer la contraseña');
+  } finally {
+    setReseteando(null);
+    setAResetear(null);
   }
+}
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-gray-500">{estudiantes.length} estudiantes registrados</p>
-        <button
-          onClick={() => setMostrarForm((v) => !v)}
-          className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-dark transition"
-        >
-          {mostrarForm ? 'Cancelar' : '+ Nuevo estudiante'}
-        </button>
-      </div>
+      <p className="text-sm text-gray-500">{estudiantes.length} estudiantes registrados</p>
 
       {error && (
         <div className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</div>
-      )}
-
-      {mostrarForm && (
-        <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-3 rounded-2xl border border-gray-200 bg-white p-5">
-          <input required type="email" placeholder="Email" value={form.email}
-            onChange={(e) => setForm({ ...form, email: e.target.value })}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm" />
-          <input required type="password" placeholder="Contraseña" value={form.password}
-            onChange={(e) => setForm({ ...form, password: e.target.value })}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm" />
-          <input required placeholder="Nombres" value={form.nombres}
-            onChange={(e) => setForm({ ...form, nombres: e.target.value })}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm" />
-          <input required placeholder="Apellidos" value={form.apellidos}
-            onChange={(e) => setForm({ ...form, apellidos: e.target.value })}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm" />
-          <input required placeholder="DNI" value={form.dni}
-            onChange={(e) => setForm({ ...form, dni: e.target.value })}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm" />
-          <input required type="date" value={form.fechaNacimiento}
-            onChange={(e) => setForm({ ...form, fechaNacimiento: e.target.value })}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm" />
-          <button type="submit" disabled={enviando}
-            className="col-span-2 mt-1 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">
-            {enviando ? 'Guardando...' : 'Guardar estudiante'}
-          </button>
-        </form>
       )}
 
       <div className="rounded-2xl border border-gray-200 bg-white overflow-hidden">
@@ -128,7 +101,9 @@ export function EstudiantesPage() {
                 <th className="px-4 py-3">Nombres</th>
                 <th className="px-4 py-3">Apellidos</th>
                 <th className="px-4 py-3">DNI</th>
-                <th className="px-4 py-3">Fecha de nacimiento</th>
+                <th className="px-4 py-3">Correo</th>
+                <th className="px-4 py-3">Grado / Sección</th>
+                <th className="px-4 py-3">Apoderado</th>
                 <th className="px-4 py-3"></th>
               </tr>
             </thead>
@@ -138,14 +113,38 @@ export function EstudiantesPage() {
                   <td className="px-4 py-3">{est.nombres}</td>
                   <td className="px-4 py-3">{est.apellidos}</td>
                   <td className="px-4 py-3">{est.dni}</td>
-                  <td className="px-4 py-3">{new Date(est.fechaNacimiento).toLocaleDateString()}</td>
+                  <td className="px-4 py-3 text-gray-500">{est.email}</td>
+                  <td className="px-4 py-3">
+                    {est.gradoNombre ? `${est.gradoNombre} "${est.seccionNombre}"` : '—'}
+                  </td>
+                  <td className="px-4 py-3 text-gray-500">
+                    {est.tutores[0] ? (
+                      <div className="flex items-center gap-2">
+                        <span>{est.tutores[0].nombres} {est.tutores[0].apellidos}</span>
+                        <button
+  onClick={() => setAResetear({ tipo: 'tutor', id: est.tutores[0].id, nombre: `${est.tutores[0].nombres} ${est.tutores[0].apellidos}` })}
+  className="text-xs font-medium text-orange-500 hover:underline"
+>
+  Restablecer clave
+</button>
+                      </div>
+                    ) : '—'}
+                  </td>
                   <td className="px-4 py-3 text-right">
-                    <button
-                      onClick={() => setAEliminar(est)}
-                      className="text-red-500 hover:text-red-700 text-xs font-medium"
-                    >
-                      Eliminar
-                    </button>
+                    <div className="flex justify-end gap-3">
+                      <button
+                        onClick={() => abrirEdicion(est)}
+                        className="text-xs font-medium text-primary hover:underline"
+                      >
+                        Editar
+                      </button>
+                      <button
+  onClick={() => setAResetear({ tipo: 'estudiante', id: est.id, nombre: `${est.nombres} ${est.apellidos}` })}
+  className="text-xs font-medium text-orange-500 hover:underline"
+>
+  Restablecer clave
+</button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -154,38 +153,99 @@ export function EstudiantesPage() {
         )}
       </div>
 
-      {/* Modal de confirmación */}
-      {aEliminar && (
+      {/* Modal de edición */}
+      {editando && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-50">
-              <svg className="h-6 w-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3M4 7h16" />
-              </svg>
-            </div>
-            <h3 className="mt-4 text-center text-base font-semibold text-gray-800">
-              ¿Eliminar estudiante?
+          <form onSubmit={handleGuardar} className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+            <h3 className="mb-4 text-base font-semibold text-gray-800">
+              Editar estudiante
             </h3>
-            <p className="mt-1 text-center text-sm text-gray-500">
-              Vas a eliminar a <span className="font-medium text-gray-700">{aEliminar.nombres} {aEliminar.apellidos}</span>. Esta acción no se puede deshacer.
-            </p>
-            <div className="mt-6 flex gap-3">
+            <div className="flex flex-col gap-3">
+              <input required placeholder="Nombres" value={form.nombres ?? ''}
+                onChange={(e) => setForm({ ...form, nombres: e.target.value })}
+                className="rounded-lg border border-gray-300 px-3 py-2 text-sm" />
+              <input required placeholder="Apellidos" value={form.apellidos ?? ''}
+                onChange={(e) => setForm({ ...form, apellidos: e.target.value })}
+                className="rounded-lg border border-gray-300 px-3 py-2 text-sm" />
+              <input required placeholder="DNI" value={form.dni ?? ''}
+                onChange={(e) => setForm({ ...form, dni: e.target.value })}
+                className="rounded-lg border border-gray-300 px-3 py-2 text-sm" />
+              <input required type="date" value={form.fechaNacimiento ?? ''}
+                onChange={(e) => setForm({ ...form, fechaNacimiento: e.target.value })}
+                className="rounded-lg border border-gray-300 px-3 py-2 text-sm" />
+            </div>
+            <div className="mt-5 flex gap-3">
               <button
-                onClick={() => setAEliminar(null)}
-                disabled={eliminando}
+                type="button"
+                onClick={() => setEditando(null)}
+                disabled={guardando}
                 className="flex-1 rounded-lg border border-gray-300 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
               >
                 Cancelar
               </button>
               <button
-                onClick={confirmarEliminar}
-                disabled={eliminando}
-                className="flex-1 rounded-lg bg-red-500 py-2 text-sm font-semibold text-white hover:bg-red-600 transition disabled:opacity-60"
+                type="submit"
+                disabled={guardando}
+                className="flex-1 rounded-lg bg-primary py-2 text-sm font-semibold text-white hover:bg-primary-dark transition disabled:opacity-60"
               >
-                {eliminando ? 'Eliminando...' : 'Eliminar'}
+                {guardando ? 'Guardando...' : 'Guardar cambios'}
               </button>
             </div>
+          </form>
+        </div>
+      )}
+{aResetear && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+    <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
+      <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-orange-50">
+        <svg className="h-6 w-6 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 10-8 0v4h8z" />
+        </svg>
+      </div>
+      <h3 className="mt-4 text-center text-base font-semibold text-gray-800">
+        ¿Restablecer contraseña?
+      </h3>
+      <p className="mt-1 text-center text-sm text-gray-500">
+        Se generará una nueva contraseña para <span className="font-medium text-gray-700">{aResetear.nombre}</span>. La contraseña anterior dejará de funcionar.
+      </p>
+      <div className="mt-6 flex gap-3">
+        <button
+          onClick={() => setAResetear(null)}
+          disabled={reseteando !== null}
+          className="flex-1 rounded-lg border border-gray-300 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
+        >
+          Cancelar
+        </button>
+        <button
+          onClick={confirmarReset}
+          disabled={reseteando !== null}
+          className="flex-1 rounded-lg bg-orange-500 py-2 text-sm font-semibold text-white hover:bg-orange-600 transition disabled:opacity-60"
+        >
+          {reseteando !== null ? 'Generando...' : 'Restablecer'}
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+      {/* Modal de resultado de reset password */}
+      {resetResultado && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
+            <h3 className="text-base font-semibold text-gray-800">Contraseña restablecida</h3>
+            <p className="mt-1 text-sm text-gray-500">
+              Entrega esta nueva contraseña a quien corresponda — no se mostrará de nuevo:
+            </p>
+            <div className="mt-3 rounded-lg bg-gray-50 p-3 text-sm">
+              <p><span className="font-medium">Correo:</span> {resetResultado.email}</p>
+              <p><span className="font-medium">Nueva contraseña:</span> {resetResultado.passwordTemporal}</p>
+            </div>
+            <button
+              onClick={() => setResetResultado(null)}
+              className="mt-4 w-full rounded-lg bg-primary py-2 text-sm font-semibold text-white hover:bg-primary-dark transition"
+            >
+              Listo
+            </button>
           </div>
         </div>
       )}

@@ -1,23 +1,26 @@
 // src/api/estudiante.api.ts
-// Funciones que llaman a los endpoints del módulo Estudiante (backend NestJS).
 import { http } from './http';
 
-export interface Estudiante {
+export interface TutorResumen {
   id: string;
-  usuarioId: string;
+  email: string;
   nombres: string;
   apellidos: string;
-  dni: string;
-  fechaNacimiento: string;
+  telefono: string | null;
+  parentesco: string;
 }
 
-export interface CrearEstudianteInput {
+export interface EstudianteConDetalle {
+  id: string;
+  usuarioId: string;
   email: string;
-  password: string;
   nombres: string;
   apellidos: string;
   dni: string;
   fechaNacimiento: string;
+  gradoNombre: string | null;
+  seccionNombre: string | null;
+  tutores: TutorResumen[];
 }
 
 export interface ActualizarEstudianteInput {
@@ -27,21 +30,14 @@ export interface ActualizarEstudianteInput {
   fechaNacimiento?: string;
 }
 
+export interface ResetPasswordResultado {
+  email: string;
+  passwordTemporal: string;
+}
+
 // GET /api/estudiantes
-export async function listarEstudiantes(): Promise<Estudiante[]> {
-  const { data } = await http.get<Estudiante[]>('/api/estudiantes');
-  return data;
-}
-
-// GET /api/estudiantes/:id
-export async function buscarEstudiante(id: string): Promise<Estudiante> {
-  const { data } = await http.get<Estudiante>(`/api/estudiantes/${id}`);
-  return data;
-}
-
-// POST /api/estudiantes
-export async function crearEstudiante(input: CrearEstudianteInput): Promise<Estudiante> {
-  const { data } = await http.post<Estudiante>('/api/estudiantes', input);
+export async function listarEstudiantes(): Promise<EstudianteConDetalle[]> {
+  const { data } = await http.get<EstudianteConDetalle[]>('/api/estudiantes');
   return data;
 }
 
@@ -49,12 +45,13 @@ export async function crearEstudiante(input: CrearEstudianteInput): Promise<Estu
 export async function actualizarEstudiante(
   id: string,
   input: ActualizarEstudianteInput,
-): Promise<Estudiante> {
-  const { data } = await http.patch<Estudiante>(`/api/estudiantes/${id}`, input);
+): Promise<EstudianteConDetalle> {
+  const { data } = await http.patch<EstudianteConDetalle>(`/api/estudiantes/${id}`, input);
   return data;
 }
 
-// DELETE /api/estudiantes/:id
-export async function eliminarEstudiante(id: string): Promise<void> {
-  await http.delete(`/api/estudiantes/${id}`);
+// PATCH /api/estudiantes/:id/reset-password
+export async function resetearPasswordEstudiante(id: string): Promise<ResetPasswordResultado> {
+  const { data } = await http.patch<ResetPasswordResultado>(`/api/estudiantes/${id}/reset-password`);
+  return data;
 }

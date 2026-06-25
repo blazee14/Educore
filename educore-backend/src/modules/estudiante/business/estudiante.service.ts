@@ -35,6 +35,43 @@ export class EstudianteService {
    * POST /api/estudiantes
    * Crea el Usuario (rol ESTUDIANTE) y el registro académico en una sola operación.
    */
+
+  /** GET /api/estudiantes (vista con detalle) */
+  async listarConDetalle() {
+    return this.estudianteRepository.listarConDetalle();
+  }
+
+  /** GET /api/estudiantes/:id (vista con detalle) */
+  async buscarDetallePorId(id: string) {
+    const estudiante = await this.estudianteRepository.buscarDetallePorId(id);
+    if (!estudiante) throw new EstudianteNoEncontradoException();
+    return estudiante;
+  }
+
+  /** PATCH /api/estudiantes/:id/reset-password */
+  async resetearPassword(id: string) {
+    const estudiante = await this.buscarPorId(id);
+    const passwordTemporal = this.generarPasswordTemporal();
+    const passwordHash = await bcrypt.hash(passwordTemporal, SALT_ROUNDS);
+
+    await this.prisma.usuario.update({
+      where: { id: estudiante.usuarioId },
+      data: { passwordHash },
+    });
+
+    const usuario = await this.prisma.usuario.findUnique({ where: { id: estudiante.usuarioId } });
+    return { email: usuario!.email, passwordTemporal };
+  }
+
+  private generarPasswordTemporal(): string {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let resultado = '';
+    for (let i = 0; i < 8; i++) {
+      resultado += chars[Math.floor(Math.random() * chars.length)];
+    }
+    return resultado;
+  }
+  
   async crear(input: CrearEstudianteInput) {
     const usuarioExistente = await this.prisma.usuario.findUnique({
       where: { email: input.email },

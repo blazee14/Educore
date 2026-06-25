@@ -3,10 +3,18 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { LoginPage } from './pages/LoginPage';
 import { RutaPrivada } from './components/RutaPrivada';
+
 import { AdminLayout } from './layouts/AdminLayout';
 import { OverviewPage } from './pages/admin/OverviewPage';
 import { EnConstruccion } from './pages/admin/EnConstruccion';
 import { EstudiantesPage } from './pages/admin/EstudiantesPage';
+import { MatriculaAdminPage } from './pages/admin/MatriculaAdminPage';
+
+import { DirectorLayout } from './layouts/DirectorLayout';
+import { DirectorDashboardPage } from './pages/director/DirectorDashboardPage';
+import { MatriculaPage } from './pages/director/MatriculaPage';
+import { EstudiantesRegistradosPage } from './pages/director/EstudiantesRegistradosPage';
+
 import { EstudianteLayout } from './layouts/EstudianteLayout';
 import { InicioPage } from './pages/estudiante/InicioPage';
 import { MiPerfilPage } from './pages/estudiante/MiPerfilPage';
@@ -17,7 +25,6 @@ import { MisCursosPage } from './pages/estudiante/MisCursosPage';
 
 // path -> { titulo, subtitulo } que el Topbar muestra (sección 6 del informe: un módulo por sidebar item)
 const seccionesEnConstruccion: { path: string; titulo: string; subtitulo: string }[] = [
-  { path: 'matricula', titulo: 'Matrícula', subtitulo: 'Gestión de matrículas por sección' },
   { path: 'docentes', titulo: 'Docentes', subtitulo: 'Listado y asignación de docentes' },
   { path: 'cursos', titulo: 'Cursos y Secciones', subtitulo: 'Gestión de cursos y secciones' },
   { path: 'asistencia', titulo: 'Asistencia', subtitulo: 'Registro y reportes de asistencia' },
@@ -41,6 +48,8 @@ export function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
+
+          {/* ---------- ADMIN ---------- */}
           <Route
             path="/admin"
             element={
@@ -57,7 +66,12 @@ export function App() {
             <Route
               path="estudiantes"
               element={<EstudiantesPage />}
-              handle={{ titulo: 'Dashboard', subtitulo: 'Listado y perfiles de estudiantes' }}
+              handle={{ titulo: 'Estudiantes', subtitulo: 'Listado y perfiles de estudiantes' }}
+            />
+            <Route
+              path="matricula"
+              element={<MatriculaAdminPage />}
+              handle={{ titulo: 'Matrícula', subtitulo: 'Gestión de matrículas por sección' }}
             />
             {seccionesEnConstruccion.map(({ path, titulo, subtitulo }) => (
               <Route
@@ -68,6 +82,35 @@ export function App() {
               />
             ))}
           </Route>
+
+          {/* ---------- DIRECTOR ---------- */}
+          <Route
+            path="/director"
+            element={
+              <RutaPrivada>
+                <DirectorLayout />
+              </RutaPrivada>
+            }
+          >
+            <Route
+              index
+              element={<DirectorDashboardPage />}
+              handle={{ titulo: 'Dashboard Dirección', subtitulo: 'Bienvenido(a), Director' }}
+            />
+            <Route
+              path="matricula"
+              element={<MatriculaPage />}
+              handle={{ titulo: 'Matrícula', subtitulo: 'Registro de nuevos estudiantes' }}
+            />
+            <Route
+              path="estudiantes"
+              element={<EstudiantesRegistradosPage />}
+              handle={{ titulo: 'Estudiantes registrados', subtitulo: 'Listado y perfiles de estudiantes' }}
+            />
+            {/* Los demás módulos del sidebar de Dirección quedan pendientes */}
+          </Route>
+
+          {/* ---------- ESTUDIANTE ---------- */}
           <Route
             path="/estudiante"
             element={
@@ -127,6 +170,7 @@ export function App() {
               handle={{ titulo: 'Biblioteca Digital', subtitulo: 'Recursos y materiales de estudio' }}
             />
           </Route>
+
           <Route path="/dashboard" element={<Navigate to="/admin" replace />} />
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
