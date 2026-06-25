@@ -23,4 +23,15 @@ export const routeMeta: Record<string, RouteMeta> = {
   '/admin/biblioteca': { titulo: 'Biblioteca', subtitulo: 'Catálogo y préstamos' },
   '/admin/incidencias': { titulo: 'Incidencias y Disciplina', subtitulo: 'Registro de incidencias' },
   '/admin/configuracion': { titulo: 'Configuración', subtitulo: 'Configuración general del sistema' },
+
+  '/estudiante': { titulo: 'Inicio', subtitulo: 'Resumen académico del estudiante' },
+  '/estudiante/perfil': { titulo: 'Mi Perfil', subtitulo: 'Datos personales del estudiante' },
+  '/estudiante/matricula': { titulo: 'Mi Matrícula', subtitulo: 'Información de matrícula actual' },
+  '/estudiante/notas': { titulo: 'Mis Notas', subtitulo: 'Calificaciones por bimestre' },
+  '/estudiante/asistencia': { titulo: 'Mi Asistencia', subtitulo: 'Registro de asistencia' },
+  '/estudiante/cursos': { titulo: 'Mis Cursos', subtitulo: 'Cursos y horarios' },
+  '/estudiante/comunicados': { titulo: 'Comunicados', subtitulo: 'Avisos y notificaciones' },
+  '/estudiante/calendario': { titulo: 'Calendario', subtitulo: 'Calendario académico y fechas importantes' },
+  '/estudiante/tareas': { titulo: 'Tareas', subtitulo: 'Tareas y asignaciones pendientes' },
+  '/estudiante/biblioteca': { titulo: 'Biblioteca Digital', subtitulo: 'Recursos y materiales de estudio' },
 };
