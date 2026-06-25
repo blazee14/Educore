@@ -1,25 +1,25 @@
-// src/layouts/AdminLayout.tsx
+// src/layouts/DirectorLayout.tsx
 import { useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
 import { routeMeta } from '../config/routeMeta';
-import { adminNavGroups, adminHomeItem } from '../config/adminNav';
+import { directorNavGroups, directorHomeItem } from '../config/directorNav';
 
-export function AdminLayout() {
+export function DirectorLayout() {
   const [sidebarAbierto, setSidebarAbierto] = useState(false);
   const { pathname } = useLocation();
-  const meta = routeMeta[pathname] ?? { titulo: 'Dashboard' };
+  const meta = routeMeta[pathname] ?? { titulo: 'Dashboard Dirección' };
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50">
       <Sidebar
         open={sidebarAbierto}
         onClose={() => setSidebarAbierto(false)}
-        navGroups={adminNavGroups}
-        homeItem={adminHomeItem}
-        userName="Administrador"
-        userInitials="AD"
+        navGroups={directorNavGroups}
+        homeItem={directorHomeItem}
+        userName="Director"
+        userInitials="DR"
       />
       <div className="flex min-w-0 flex-1 flex-col">
         <Topbar

@@ -4,6 +4,9 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { isRequiere2FA } from '../api/auth.api';
 import { TextField } from '../components/TextField';
+import { decodificarRol } from '../api/jwt';
+import { rutaPorRol } from '../config/rutaPorRol';
+
 import axios from 'axios';
 
 type Paso = 'credenciales' | 'codigo-2fa';
@@ -31,39 +34,40 @@ export function LoginPage() {
   }, [darkMode]);
 
   async function handleLogin(e: FormEvent) {
-    e.preventDefault();
-    setError(null);
-    setEnviando(true);
-    try {
-      const resultado = await login(email, password);
-      if (isRequiere2FA(resultado)) {
-        setUsuarioId(resultado.usuarioId);
-        setCodigoDev(resultado.codigoDev ?? null);
-        setPaso('codigo-2fa');
-      } else {
-        navigate('/dashboard');
-      }
-    } catch (err) {
-      setError(mensajeDeError(err, 'Email o contraseña incorrectos'));
-    } finally {
-      setEnviando(false);
+  e.preventDefault();
+  setError(null);
+  setEnviando(true);
+  try {
+    const resultado = await login(email, password);
+    if (isRequiere2FA(resultado)) {
+      setUsuarioId(resultado.usuarioId);
+      setCodigoDev(resultado.codigoDev ?? null);
+      setPaso('codigo-2fa');
+    } else {
+      const rol = decodificarRol(resultado.accessToken);
+      navigate(rutaPorRol(rol));
     }
+  } catch (err) {
+    setError(mensajeDeError(err, 'Email o contraseña incorrectos'));
+  } finally {
+    setEnviando(false);
   }
+}
 
   async function handleVerify2FA(e: FormEvent) {
-    e.preventDefault();
-    if (!usuarioId) return;
-    setError(null);
-    setEnviando(true);
-    try {
-      await verify2FA(usuarioId, codigo);
-      navigate('/dashboard');
-    } catch (err) {
-      setError(mensajeDeError(err, 'Código inválido o expirado'));
-    } finally {
-      setEnviando(false);
-    }
+  e.preventDefault();
+  if (!usuarioId) return;
+  setError(null);
+  setEnviando(true);
+  try {
+    const rol = await verify2FA(usuarioId, codigo);
+    navigate(rutaPorRol(rol));
+  } catch (err) {
+    setError(mensajeDeError(err, 'Código inválido o expirado'));
+  } finally {
+    setEnviando(false);
   }
+}
 
   return (
     <div className="h-screen w-screen flex flex-col overflow-hidden bg-white dark:bg-gray-900 transition-colors">

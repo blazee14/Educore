@@ -9,6 +9,7 @@ datasource db {
 
 enum Rol {
   ADMIN
+  DIRECTOR
   DOCENTE
   TUTOR
   ESTUDIANTE

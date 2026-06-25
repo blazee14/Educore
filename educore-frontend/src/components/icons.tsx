@@ -214,3 +214,30 @@ export function IconLogout(props: React.SVGProps<SVGSVGElement>) {
     </svg>
   );
 }
+
+export function IconTrendingUp(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" {...props}>
+      <path d="M3 17l6-6 4 4 8-8" />
+      <path d="M15 7h6v6" />
+    </svg>
+  );
+}
+
+export function IconFile(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" {...props}>
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6Z" />
+      <path d="M14 2v6h6" />
+    </svg>
+  );
+}
+
+export function IconInbox(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" {...props}>
+      <path d="M3 12h4l2 3h6l2-3h4" />
+      <path d="M5.5 5h13l2.5 7v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-6Z" />
+    </svg>
+  );
+}

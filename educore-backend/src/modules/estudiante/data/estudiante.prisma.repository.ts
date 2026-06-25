@@ -5,12 +5,68 @@ import { PrismaService } from '../../../prisma/prisma.service';
 import {
   IEstudianteRepository,
   CrearEstudianteData,
+  EstudianteConDetalle,
 } from './estudiante.repository.interface';
 import { Estudiante } from '../domain/estudiante.entity';
 
 @Injectable()
 export class EstudiantePrismaRepository implements IEstudianteRepository {
   constructor(private readonly prisma: PrismaService) {}
+
+  async listarConDetalle(): Promise<EstudianteConDetalle[]> {
+    const rows = await this.prisma.estudiante.findMany({
+      include: {
+        usuario: true,
+        matriculas: {
+          orderBy: { fechaMatricula: 'desc' },
+          take: 1,
+          include: { seccion: { include: { grado: true } } },
+        },
+        tutores: { include: { tutor: { include: { usuario: true } } } },
+      },
+      orderBy: { apellidos: 'asc' },
+    });
+    return rows.map((row) => this.mapearConDetalle(row));
+  }
+
+  async buscarDetallePorId(id: string): Promise<EstudianteConDetalle | null> {
+    const row = await this.prisma.estudiante.findUnique({
+      where: { id },
+      include: {
+        usuario: true,
+        matriculas: {
+          orderBy: { fechaMatricula: 'desc' },
+          take: 1,
+          include: { seccion: { include: { grado: true } } },
+        },
+        tutores: { include: { tutor: { include: { usuario: true } } } },
+      },
+    });
+    return row ? this.mapearConDetalle(row) : null;
+  }
+
+  private mapearConDetalle(row: any): EstudianteConDetalle {
+    const matriculaReciente = row.matriculas[0];
+    return {
+      id: row.id,
+      usuarioId: row.usuarioId,
+      email: row.usuario.email,
+      nombres: row.nombres,
+      apellidos: row.apellidos,
+      dni: row.dni,
+      fechaNacimiento: row.fechaNacimiento,
+      gradoNombre: matriculaReciente?.seccion.grado.nombre ?? null,
+      seccionNombre: matriculaReciente?.seccion.nombre ?? null,
+      tutores: row.tutores.map((et: any) => ({
+        id: et.tutor.id,
+        email: et.tutor.usuario.email,
+        nombres: et.tutor.nombres,
+        apellidos: et.tutor.apellidos,
+        telefono: et.tutor.telefono,
+        parentesco: et.parentesco,
+      })),
+    };
+  }
 
   private mapear(row: any): Estudiante {
     return new Estudiante(
