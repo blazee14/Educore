@@ -1,6 +1,7 @@
-// src/pages/estudiante/InicioPage.tsx
-import { useEffect, useState } from 'react';
-import { miPerfilEstudiante, type EstudianteConDetalle } from '../../api/estudiante.api';
+// src/pages/tutor/TutorDashboardPage.tsx
+// Dashboard del rol Tutor. "Mi hijo(a)" viene del backend real (via TutorContext);
+// notas/asistencia/pagos son mock hasta que existan esos módulos.
+import { useTutor } from '../../context/TutorContext';
 import { IconBookOpen, IconCheckCircle, IconClipboard, IconChat, IconCalendar } from '../../components/icons';
 
 const statsMock = [
@@ -17,16 +18,8 @@ const cursosMock = [
   { curso: 'Inglés', nota: 14.5, estado: 'Bueno' },
 ];
 
-export function InicioPage() {
-  const [perfil, setPerfil] = useState<EstudianteConDetalle | null>(null);
-  const [cargando, setCargando] = useState(true);
-
-  useEffect(() => {
-    miPerfilEstudiante()
-      .then(setPerfil)
-      .catch(() => {})
-      .finally(() => setCargando(false));
-  }, []);
+export function TutorDashboardPage() {
+  const { hijoSeleccionado: hijo, cargando } = useTutor();
 
   return (
     <div className="flex flex-col gap-5">
@@ -46,21 +39,26 @@ export function InicioPage() {
       <div className="rounded-2xl border border-gray-200 bg-white p-5">
         {cargando ? (
           <p className="text-sm text-gray-400">Cargando...</p>
-        ) : !perfil ? (
-          <p className="text-sm text-gray-400">No se encontró tu información.</p>
+        ) : !hijo ? (
+          <p className="text-sm text-gray-400">No se encontraron estudiantes asociados.</p>
         ) : (
           <div className="flex items-center gap-5">
             <div className="flex h-20 w-20 flex-none items-center justify-center rounded-full bg-blue-100 text-2xl font-semibold text-blue-600">
-              {perfil.nombres[0]}{perfil.apellidos[0]}
+              {hijo.nombres[0]}{hijo.apellidos[0]}
             </div>
             <div className="flex-1">
-              <p className="text-lg font-semibold text-gray-800">{perfil.nombres} {perfil.apellidos}</p>
+              <div className="flex items-center gap-2">
+                <p className="text-lg font-semibold text-gray-800">{hijo.nombres} {hijo.apellidos}</p>
+                <span className="rounded-full bg-green-50 px-2 py-0.5 text-[11px] font-medium text-green-600">
+                  {hijo.estadoMatricula ?? 'Sin matrícula'}
+                </span>
+              </div>
               <p className="mt-0.5 text-sm text-gray-500">
-                {perfil.gradoNombre ? `${perfil.gradoNombre} "${perfil.seccionNombre}"` : 'Sin sección asignada'}
+                {hijo.gradoNombre ? `${hijo.gradoNombre} "${hijo.seccionNombre}"` : 'Sin sección asignada'}
               </p>
               <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-xs text-gray-400">
-                <span>DNI: {perfil.dni}</span>
-                <span>Correo: {perfil.email}</span>
+                <span>DNI: {hijo.dni}</span>
+                <span>Parentesco: {hijo.parentesco}</span>
               </div>
             </div>
           </div>
@@ -69,7 +67,7 @@ export function InicioPage() {
 
       <div className="rounded-2xl border border-gray-200 bg-white p-5">
         <div className="mb-3 flex items-center justify-between">
-          <p className="font-semibold text-gray-800">Mi rendimiento — Bimestre II</p>
+          <p className="font-semibold text-gray-800">Rendimiento académico — Bimestre II</p>
           <span className="text-xs text-gray-400">(datos de ejemplo)</span>
         </div>
         <div className="flex flex-col gap-3">

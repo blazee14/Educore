@@ -119,4 +119,12 @@ export class EstudianteService {
     await this.buscarPorId(id);
     return this.estudianteRepository.eliminar(id);
   }
+
+  /** GET /api/estudiantes/me */
+  async miPerfil(usuarioId: string) {
+    const estudiante = await this.estudianteRepository.buscarPorUsuarioId(usuarioId);
+    if (!estudiante) throw new EstudianteNoEncontradoException();
+    const detalle = await this.estudianteRepository.buscarDetallePorId(estudiante.id);
+    return detalle;
+  }
 }

@@ -5,6 +5,8 @@ export function rutaPorRol(rol: string | null): string {
       return '/director';
     case 'ADMIN':
       return '/admin';
+      case 'TUTOR':
+  return '/tutor';
     case 'ESTUDIANTE':
       return '/estudiante';
     default:

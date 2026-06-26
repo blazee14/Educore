@@ -1,23 +1,24 @@
 // src/modules/estudiante/presentation/estudiante.controller.ts
 // Capa de Presentación: HTTP, validación de entrada, guards. No conoce SQL ni reglas de negocio.
-import {
-  Controller,
-  Get,
-  Param,
-  Patch,
-  Body,
-  UseGuards,
-} from '@nestjs/common';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../../common/guards/roles.guard';
 import { Roles } from '../../../common/decorators/roles.decorator';
 import { EstudianteService } from '../business/estudiante.service';
 import { ActualizarEstudianteDto } from './dto/actualizar-estudiante.dto';
+import { Controller, Get, Param, Patch, Body, Req, UseGuards } from '@nestjs/common';
+import { Request } from 'express';
 
 @Controller('api/estudiantes')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class EstudianteController {
   constructor(private readonly estudianteService: EstudianteService) {}
+
+  @Get('me')
+  @Roles('ESTUDIANTE')
+  miPerfil(@Req() req: Request) {
+    const usuarioId = (req.user as any).id;
+    return this.estudianteService.miPerfil(usuarioId);
+  }
 
   @Get()
   @Roles('ADMIN', 'DOCENTE')

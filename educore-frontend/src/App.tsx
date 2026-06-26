@@ -22,6 +22,8 @@ import { MiMatriculaPage } from './pages/estudiante/MiMatriculaPage';
 import { EnConstruccion as EnConstruccionEst } from './pages/estudiante/EnConstruccion';
 import { CalendarioPage } from './pages/estudiante/CalendarioPage';
 import { MisCursosPage } from './pages/estudiante/MisCursosPage';
+import { TutorLayout } from './layouts/TutorLayout';
+import { TutorDashboardPage } from './pages/tutor/TutorDashboardPage';
 
 // path -> { titulo, subtitulo } que el Topbar muestra (sección 6 del informe: un módulo por sidebar item)
 const seccionesEnConstruccion: { path: string; titulo: string; subtitulo: string }[] = [
@@ -170,6 +172,22 @@ export function App() {
               handle={{ titulo: 'Biblioteca Digital', subtitulo: 'Recursos y materiales de estudio' }}
             />
           </Route>
+
+          {/* ---------- TUTOR ---------- */}
+<Route
+  path="/tutor"
+  element={
+    <RutaPrivada>
+      <TutorLayout />
+    </RutaPrivada>
+  }
+>
+  <Route
+    index
+    element={<TutorDashboardPage />}
+    handle={{ titulo: 'Portal de Padres', subtitulo: 'Mantente informado sobre el progreso de tu hijo(a)' }}
+  />
+</Route>
 
           <Route path="/dashboard" element={<Navigate to="/admin" replace />} />
           <Route path="*" element={<Navigate to="/login" replace />} />

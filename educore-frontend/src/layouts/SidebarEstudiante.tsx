@@ -11,9 +11,11 @@ const linkActive = 'bg-white text-primary-dark';
 interface Props {
   open: boolean;
   onClose: () => void;
+  userName?: string;
+  userInitials?: string;
 }
 
-export function SidebarEstudiante({ open, onClose }: Props) {
+export function SidebarEstudiante({ open, onClose, userName = 'Estudiante', userInitials = 'ES' }: Props) {
   const { logout } = useAuth();
 
   return (
@@ -73,10 +75,10 @@ export function SidebarEstudiante({ open, onClose }: Props) {
         <div className="border-t border-white/10 p-4">
           <div className="mb-3 flex items-center gap-3">
             <div className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-blue-400/30 text-sm font-semibold text-white">
-              ES
+              {userInitials}
             </div>
             <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-white">Estudiante</p>
+              <p className="truncate text-sm font-semibold text-white">{userName}</p>
               <p className="flex items-center gap-1 text-xs text-blue-100/70">
                 <span className="h-1.5 w-1.5 rounded-full bg-green-400" /> En línea
               </p>

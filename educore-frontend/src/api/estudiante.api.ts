@@ -55,3 +55,14 @@ export async function resetearPasswordEstudiante(id: string): Promise<ResetPassw
   const { data } = await http.patch<ResetPasswordResultado>(`/api/estudiantes/${id}/reset-password`);
   return data;
 }
+
+export interface MiPerfilEstudiante {
+  nombres: string;
+  apellidos: string;
+}
+
+// GET /api/estudiantes/me
+export async function miPerfilEstudiante(): Promise<EstudianteConDetalle> {
+  const { data } = await http.get<EstudianteConDetalle>('/api/estudiantes/me');
+  return data;
+}
