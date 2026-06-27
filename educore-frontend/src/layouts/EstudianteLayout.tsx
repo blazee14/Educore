@@ -1,10 +1,10 @@
 // src/layouts/EstudianteLayout.tsx
 import { useEffect, useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
+import { miPerfilEstudiante } from '../api/estudiante.api';
+import { routeMeta } from '../config/routeMeta';
 import { SidebarEstudiante } from './SidebarEstudiante';
 import { Topbar } from './Topbar';
-import { routeMeta } from '../config/routeMeta';
-import { miPerfilEstudiante } from '../api/estudiante.api';
 
 export function EstudianteLayout() {
   const [sidebarAbierto, setSidebarAbierto] = useState(false);

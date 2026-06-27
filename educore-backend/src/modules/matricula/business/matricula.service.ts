@@ -62,6 +62,29 @@ export class MatriculaService {
     });
   }
 
+  /** GET /api/matricula/mi-matricula — el estudiante autenticado ve su propia matrícula */
+  async miMatricula(usuarioId: string) {
+    const estudiante = await this.prisma.estudiante.findUnique({ where: { usuarioId } });
+    if (!estudiante) throw new MatriculaNoEncontradaException();
+
+    const matricula = await this.prisma.matricula.findFirst({
+      where: { estudianteId: estudiante.id },
+      orderBy: { fechaMatricula: 'desc' },
+      include: { seccion: { include: { grado: true } } },
+    });
+    if (!matricula) throw new MatriculaNoEncontradaException();
+
+    return {
+      id: matricula.id,
+      gradoNombre: matricula.seccion.grado.nombre,
+      seccionNombre: matricula.seccion.nombre,
+      nivel: matricula.seccion.grado.nivel,
+      anioEscolar: matricula.anioEscolar,
+      estado: matricula.estado,
+      fechaMatricula: matricula.fechaMatricula,
+    };
+  }
+
   async registrar(data: RegistrarMatriculaData) {
     const seccion = await this.prisma.seccion.findUnique({ where: { id: data.seccionId } });
     if (!seccion) throw new SeccionNoEncontradaException();

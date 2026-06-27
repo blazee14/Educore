@@ -7,6 +7,7 @@ import { EstudianteModule } from './modules/estudiante/estudiante.module';
 import { MatriculaModule } from './modules/matricula/matricula.module';
 import { AcademicoModule } from './modules/academico/academico.module';
 import { TutorModule } from './modules/tutor/tutor.module';
+import { AsistenciaModule } from './modules/asistencia/asistencia.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -16,6 +17,7 @@ import { TutorModule } from './modules/tutor/tutor.module';
     MatriculaModule,
     AcademicoModule,
     TutorModule,
+    AsistenciaModule,
     // Aquí se irán agregando MatriculaModule, AcademicoModule, etc.
   ],
 })

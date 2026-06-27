@@ -44,6 +44,22 @@ export interface MatriculaConDetalle {
   fechaMatricula: string;
 }
 
+export interface MiMatricula {
+  id: string;
+  gradoNombre: string;
+  seccionNombre: string;
+  nivel: string;
+  anioEscolar: number;
+  estado: string;
+  fechaMatricula: string;
+}
+
+// GET /api/matricula/mi-matricula
+export async function miMatricula(): Promise<MiMatricula> {
+  const { data } = await http.get<MiMatricula>('/api/matricula/mi-matricula');
+  return data;
+}
+
 // POST /api/matricula
 export async function registrarMatricula(input: RegistrarMatriculaInput): Promise<CredencialesGeneradas> {
   const { data } = await http.post<CredencialesGeneradas>('/api/matricula', input);

@@ -27,6 +27,27 @@ enum EstadoMatricula {
   FINALIZADA
 }
 
+enum EstadoAsistencia {
+  PRESENTE
+  TARDANZA
+  FALTA
+}
+
+model Asistencia {
+  id           String           @id @default(uuid())
+  estudianteId String           @map("estudiante_id")
+  seccionId    String           @map("seccion_id")
+  fecha        DateTime         @db.Date
+  estado       EstadoAsistencia
+  creadoEn     DateTime         @default(now()) @map("creado_en")
+
+  estudiante Estudiante @relation(fields: [estudianteId], references: [id], onDelete: Cascade)
+  seccion    Seccion    @relation(fields: [seccionId], references: [id], onDelete: Cascade)
+
+  @@unique([estudianteId, fecha])
+  @@map("asistencia")
+}
+
 model Usuario {
   id              String    @id @default(uuid())
   email           String    @unique
@@ -83,7 +104,7 @@ model Estudiante {
   usuario         Usuario   @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
   tutores         EstudianteTutor[]
   matriculas      Matricula[]
-
+  asistencias     Asistencia[]
   @@map("estudiante")
 }
 
@@ -133,6 +154,7 @@ model Seccion {
 
   grado      Grado       @relation(fields: [gradoId], references: [id], onDelete: Cascade)
   matriculas Matricula[]
+  asistencias Asistencia[]
 
   @@unique([gradoId, nombre, anioEscolar])
   @@map("seccion")

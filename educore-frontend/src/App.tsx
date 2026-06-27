@@ -24,12 +24,12 @@ import { CalendarioPage } from './pages/estudiante/CalendarioPage';
 import { MisCursosPage } from './pages/estudiante/MisCursosPage';
 import { TutorLayout } from './layouts/TutorLayout';
 import { TutorDashboardPage } from './pages/tutor/TutorDashboardPage';
+import { AsistenciaAdminPage } from './pages/admin/AsistenciaAdminPage';
 
-// path -> { titulo, subtitulo } que el Topbar muestra (sección 6 del informe: un módulo por sidebar item)
+
 const seccionesEnConstruccion: { path: string; titulo: string; subtitulo: string }[] = [
   { path: 'docentes', titulo: 'Docentes', subtitulo: 'Listado y asignación de docentes' },
   { path: 'cursos', titulo: 'Cursos y Secciones', subtitulo: 'Gestión de cursos y secciones' },
-  { path: 'asistencia', titulo: 'Asistencia', subtitulo: 'Registro y reportes de asistencia' },
   { path: 'notas', titulo: 'Notas y Evaluaciones', subtitulo: 'Registro de notas por bimestre' },
   { path: 'calendario', titulo: 'Calendario Académico', subtitulo: 'Eventos y fechas clave del año' },
   { path: 'pagos', titulo: 'Pagos y Pensiones', subtitulo: 'Control de pagos por estudiante' },
@@ -43,7 +43,6 @@ const seccionesEnConstruccion: { path: string; titulo: string; subtitulo: string
   { path: 'incidencias', titulo: 'Incidencias y Disciplina', subtitulo: 'Registro de incidencias' },
   { path: 'configuracion', titulo: 'Configuración', subtitulo: 'Configuración general del sistema' },
 ];
-
 export function App() {
   return (
     <AuthProvider>
@@ -75,6 +74,11 @@ export function App() {
               element={<MatriculaAdminPage />}
               handle={{ titulo: 'Matrícula', subtitulo: 'Gestión de matrículas por sección' }}
             />
+            <Route
+  path="asistencia"
+  element={<AsistenciaAdminPage />}
+  handle={{ titulo: 'Asistencia', subtitulo: 'Registro y reportes de asistencia' }}
+/>
             {seccionesEnConstruccion.map(({ path, titulo, subtitulo }) => (
               <Route
                 key={path}
