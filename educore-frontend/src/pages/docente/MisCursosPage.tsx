@@ -1,32 +1,15 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { CardCursoDocente } from '../../components/CardCursoDocente';
 import { SidebarCurso } from '../../components/SidebarCurso';
 import { IconSearch } from '../../components/icons';
-import type { Curso } from '../../api/cursos.api';
-
-type CursoConProfesor = Curso & { profesorEmail: string };
-
-const cursos: CursoConProfesor[] = [
-  { nombre: 'Matemáticas', grado: '3°', seccion: 'A', nivel: 'Primaria', profesor: 'Juan Pérez', color: '#ef4444', profesorEmail: 'juan.perez@educore.test' },
-  { nombre: 'Matemáticas', grado: '3°', seccion: 'B', nivel: 'Primaria', profesor: 'Juan Pérez', color: '#ef4444', profesorEmail: 'juan.perez@educore.test' },
-  { nombre: 'Matemáticas', grado: '4°', seccion: 'A', nivel: 'Primaria', profesor: 'Juan Pérez', color: '#ef4444', profesorEmail: 'juan.perez@educore.test' },
-  { nombre: 'Comunicación', grado: '3°', seccion: 'A', nivel: 'Primaria', profesor: 'María López', color: '#eab308', profesorEmail: 'maria.lopez@educore.test' },
-  { nombre: 'Comunicación', grado: '4°', seccion: 'B', nivel: 'Primaria', profesor: 'María López', color: '#eab308', profesorEmail: 'maria.lopez@educore.test' },
-  { nombre: 'Ciencia y Tecnología', grado: '3°', seccion: 'A', nivel: 'Primaria', profesor: 'Carlos Ruiz', color: '#22c55e', profesorEmail: 'carlos.ruiz@educore.test' },
-  { nombre: 'Ciencia y Tecnología', grado: '5°', seccion: 'A', nivel: 'Primaria', profesor: 'Carlos Ruiz', color: '#22c55e', profesorEmail: 'carlos.ruiz@educore.test' },
-  { nombre: 'Inglés', grado: '4°', seccion: 'A', nivel: 'Primaria', profesor: 'Peter Smith', color: '#a855f7', profesorEmail: 'peter.smith@educore.test' },
-  { nombre: 'Inglés', grado: '5°', seccion: 'B', nivel: 'Primaria', profesor: 'Peter Smith', color: '#a855f7', profesorEmail: 'peter.smith@educore.test' },
-  { nombre: 'Personal Social', grado: '3°', seccion: 'B', nivel: 'Primaria', profesor: 'Ana García', color: '#f97316', profesorEmail: 'ana.garcia@educore.test' },
-  { nombre: 'Arte y Cultura', grado: '5°', seccion: 'A', nivel: 'Primaria', profesor: 'Lucía Torres', color: '#06b6d4', profesorEmail: 'lucia.torres@educore.test' },
-  { nombre: 'Educación Física', grado: '3°', seccion: 'A', nivel: 'Primaria', profesor: 'Roberto Díaz', color: '#84cc16', profesorEmail: 'roberto.diaz@educore.test' },
-  { nombre: 'Educación Física', grado: '1°', seccion: 'A', nivel: 'Primaria', profesor: 'Roberto Díaz', color: '#84cc16', profesorEmail: 'roberto.diaz@educore.test' },
-  { nombre: 'Religión', grado: '2°', seccion: 'A', nivel: 'Primaria', profesor: 'Sofía Mendoza', color: '#7dd3fc', profesorEmail: 'sofia.mendoza@educore.test' },
-  { nombre: 'Religión', grado: '2°', seccion: 'B', nivel: 'Primaria', profesor: 'Sofía Mendoza', color: '#7dd3fc', profesorEmail: 'sofia.mendoza@educore.test' },
-];
+import { misAsignaciones, type CursoConProfesor } from '../../api/docente.api';
 
 const opcionesPagina = [8, 12, 24];
 
 export function CursosDocentePage() {
+  const [cursos, setCursos] = useState<CursoConProfesor[]>([]);
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [busqueda, setBusqueda] = useState('');
   const [filtroGrado, setFiltroGrado] = useState('');
   const [filtroSeccion, setFiltroSeccion] = useState('');
@@ -35,8 +18,14 @@ export function CursosDocentePage() {
   const [pagina, setPagina] = useState(1);
   const [cursoSeleccionado, setCursoSeleccionado] = useState<CursoConProfesor | null>(null);
 
-  const grados = useMemo(() => [...new Set(cursos.map((c) => c.grado))].sort(), []);
-  const secciones = useMemo(() => [...new Set(cursos.map((c) => c.seccion))].sort(), []);
+  useEffect(() => {
+    misAsignaciones()
+      .then((data) => { setCursos(data); setCargando(false); })
+      .catch(() => { setError('No se pudieron cargar tus cursos'); setCargando(false); });
+  }, []);
+
+  const grados = useMemo(() => [...new Set(cursos.map((c) => c.grado))].sort(), [cursos]);
+  const secciones = useMemo(() => [...new Set(cursos.map((c) => c.seccion))].sort(), [cursos]);
 
   const filtrados = useMemo(() => {
     let result = cursos;
@@ -47,13 +36,21 @@ export function CursosDocentePage() {
     if (filtroGrado) result = result.filter((c) => c.grado === filtroGrado);
     if (filtroSeccion) result = result.filter((c) => c.seccion === filtroSeccion);
     return result;
-  }, [busqueda, filtroGrado, filtroSeccion]);
+  }, [busqueda, filtroGrado, filtroSeccion, cursos]);
 
   const totalPaginas = Math.max(1, Math.ceil(filtrados.length / porPagina));
   const paginados = filtrados.slice((pagina - 1) * porPagina, pagina * porPagina);
 
   function cambiarPagina(p: number) {
     if (p >= 1 && p <= totalPaginas) setPagina(p);
+  }
+
+  if (cargando) {
+    return <div className="flex h-full min-h-[30vh] items-center justify-center"><p className="text-sm text-gray-400">Cargando cursos...</p></div>;
+  }
+
+  if (error) {
+    return <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">{error}</div>;
   }
 
   return (

@@ -55,6 +55,7 @@ export class EstudiantePrismaRepository implements IEstudianteRepository {
       apellidos: row.apellidos,
       dni: row.dni,
       fechaNacimiento: row.fechaNacimiento,
+      seccionId: matriculaReciente?.seccion.id ?? null,
       gradoNombre: matriculaReciente?.seccion.grado.nombre ?? null,
       seccionNombre: matriculaReciente?.seccion.nombre ?? null,
       tutores: row.tutores.map((et: any) => ({

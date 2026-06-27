@@ -1,9 +1,19 @@
 import { useState, useEffect, useCallback } from 'react';
 import { ModalActividad, type Actividad, type TipoActividad } from './ModalActividad';
-import type { Curso } from '../api/cursos.api';
+import type { EstadoAsistencia, AlumnoParaAsistencia } from '../api/asistencia.api';
+import { listarAsistenciaPorSeccion, registrarAsistencia } from '../api/asistencia.api';
 
 interface Props {
-  curso: Curso & { profesorEmail?: string };
+  curso: {
+    nombre: string;
+    grado: string;
+    seccion: string;
+    nivel: string;
+    profesor: string;
+    color: string;
+    profesorEmail?: string;
+    seccionId: string;
+  };
   isOpen: boolean;
   onClose: () => void;
 }
@@ -11,29 +21,7 @@ interface Props {
 type Tab = 'contenido' | 'calendario' | 'asistencia' | 'calificaciones';
 
 const STORAGE_PREFIX = 'educore-actividades-';
-const ASISTENCIA_STORAGE_PREFIX = 'educore-asistencia-';
 const CALIFICACIONES_STORAGE_PREFIX = 'educore-calificaciones-';
-
-type EstadoAsistencia = 'ASISTIO' | 'FALTO' | 'JUSTIFICADO' | 'TARDANZA';
-
-interface AsistenciaAlumno {
-  id: string;
-  nombres: string;
-  apellidos: string;
-}
-
-const estudiantesMock: AsistenciaAlumno[] = [
-  { id: 's1', nombres: 'Juan', apellidos: 'Pérez' },
-  { id: 's2', nombres: 'María', apellidos: 'García' },
-  { id: 's3', nombres: 'Carlos', apellidos: 'López' },
-  { id: 's4', nombres: 'Ana', apellidos: 'Torres' },
-  { id: 's5', nombres: 'Luis', apellidos: 'Mendoza' },
-  { id: 's6', nombres: 'Sofía', apellidos: 'Ríos' },
-  { id: 's7', nombres: 'Diego', apellidos: 'Castro' },
-  { id: 's8', nombres: 'Valentina', apellidos: 'Ruiz' },
-  { id: 's9', nombres: 'Mateo', apellidos: 'Flores' },
-  { id: 's10', nombres: 'Lucía', apellidos: 'Álvarez' },
-];
 
 const diasSemana = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie'];
 const meses = [
@@ -90,17 +78,14 @@ export function SidebarCurso({ curso, isOpen, onClose }: Props) {
   const [diaSeleccionado, setDiaSeleccionado] = useState<number | null>(null);
   const [fechaAsistencia, setFechaAsistencia] = useState(new Date().toISOString().split('T')[0]);
   const [asistencia, setAsistencia] = useState<Record<string, EstadoAsistencia>>({});
-  const [estudianteHistorial, setEstudianteHistorial] = useState<AsistenciaAlumno | null>(null);
+  const [estudiantes, setEstudiantes] = useState<AlumnoParaAsistencia[]>([]);
+  const [estudianteHistorial, setEstudianteHistorial] = useState<AlumnoParaAsistencia | null>(null);
+  const [historialAsistencia, setHistorialAsistencia] = useState<{ fecha: string; estado: EstadoAsistencia | null }[]>([]);
+  const [cargandoAsistencia, setCargandoAsistencia] = useState(false);
   const [calificaciones, setCalificaciones] = useState<Record<string, number>>({});
-  const [estudianteCalif, setEstudianteCalif] = useState<AsistenciaAlumno | null>(null);
+  const [estudianteCalif, setEstudianteCalif] = useState<AlumnoParaAsistencia | null>(null);
 
   const cursoKey = `${curso.nombre}-${curso.grado}-${curso.seccion}`.replace(/\s+/g, '_');
-
-  function getEstudiantesCurso(): AsistenciaAlumno[] {
-    const hash = cursoKey.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-    const start = hash % 7;
-    return estudiantesMock.slice(start, start + 5);
-  }
 
   function getNotaMock(estId: string, actId: string): number {
     let h = 0;
@@ -109,21 +94,62 @@ export function SidebarCurso({ curso, isOpen, onClose }: Props) {
     return (Math.abs(h) % 16) + 5;
   }
 
-  function getCalificacionesCurso(): Record<string, number> {
+  function cargarCalificacionesLocal() {
     try {
       const stored = localStorage.getItem(CALIFICACIONES_STORAGE_PREFIX + cursoKey);
-      if (stored) return JSON.parse(stored);
+      if (stored) { setCalificaciones(JSON.parse(stored)); return true; }
     } catch { /* ignore */ }
+    return false;
+  }
+
+  function generarCalificacionesMock() {
     const cal: Record<string, number> = {};
     const acts = obtenerActividades(cursoKey);
-    const ests = getEstudiantesCurso();
-    for (const est of ests) {
+    for (const est of estudiantes) {
       for (const act of acts) {
-        cal[`${est.id}-${act.id}`] = getNotaMock(est.id, act.id);
+        cal[`${est.estudianteId}-${act.id}`] = getNotaMock(est.estudianteId, act.id);
       }
     }
-    return cal;
+    setCalificaciones(cal);
   }
+
+  async function cargarAsistencia(fecha: string) {
+    if (!curso.seccionId) return;
+    setCargandoAsistencia(true);
+    try {
+      const data = await listarAsistenciaPorSeccion(curso.seccionId, fecha);
+      setEstudiantes(data);
+      const inicial: Record<string, EstadoAsistencia> = {};
+      data.forEach((a) => {
+        if (a.estadoActual) inicial[a.estudianteId] = a.estadoActual;
+      });
+      setAsistencia(inicial);
+    } catch {
+      setEstudiantes([]);
+      setAsistencia({});
+    } finally {
+      setCargandoAsistencia(false);
+    }
+  }
+
+  async function guardarAsistencia(fecha: string) {
+    if (!curso.seccionId) return;
+    const registros = Object.entries(asistencia).map(([estudianteId, estado]) => ({
+      estudianteId, estado,
+    }));
+    if (registros.length === 0) return;
+    try {
+      await registrarAsistencia(curso.seccionId, fecha, registros);
+    } catch { /* ignore */ }
+  }
+
+  // Debounce guardar asistencia al cambiar
+  const [asistenciaDirty, setAsistenciaDirty] = useState(false);
+  useEffect(() => {
+    if (!isOpen || !asistenciaDirty) return;
+    const timer = setTimeout(() => { guardarAsistencia(fechaAsistencia); setAsistenciaDirty(false); }, 800);
+    return () => clearTimeout(timer);
+  }, [asistencia, isOpen, fechaAsistencia, asistenciaDirty]);
 
   useEffect(() => {
     if (isOpen) {
@@ -135,13 +161,12 @@ export function SidebarCurso({ curso, isOpen, onClose }: Props) {
       setDiaSeleccionado(null);
       const fechaHoy = ahora.toISOString().split('T')[0];
       setFechaAsistencia(fechaHoy);
-      try {
-        const stored = localStorage.getItem(ASISTENCIA_STORAGE_PREFIX + cursoKey + '-' + fechaHoy);
-        setAsistencia(stored ? JSON.parse(stored) : {});
-      } catch {
-        setAsistencia({});
+      setAsistencia({});
+      setEstudiantes([]);
+      cargarAsistencia(fechaHoy);
+      if (!cargarCalificacionesLocal()) {
+        // will generate mocks after students load
       }
-      setCalificaciones(getCalificacionesCurso());
     }
   }, [isOpen, cursoKey]);
 
@@ -152,10 +177,11 @@ export function SidebarCurso({ curso, isOpen, onClose }: Props) {
   }, [actividades, isOpen, cursoKey]);
 
   useEffect(() => {
-    if (isOpen) {
-      localStorage.setItem(ASISTENCIA_STORAGE_PREFIX + cursoKey + '-' + fechaAsistencia, JSON.stringify(asistencia));
+    if (isOpen && estudiantes.length > 0 && Object.keys(calificaciones).length === 0) {
+      const stored = localStorage.getItem(CALIFICACIONES_STORAGE_PREFIX + cursoKey);
+      if (!stored) generarCalificacionesMock();
     }
-  }, [asistencia, isOpen, cursoKey, fechaAsistencia]);
+  }, [isOpen, estudiantes]);
 
   useEffect(() => {
     if (isOpen) {
@@ -462,21 +488,21 @@ export function SidebarCurso({ curso, isOpen, onClose }: Props) {
           })()}
 
           {tab === 'asistencia' && (() => {
-            const estudiantes = getEstudiantesCurso();
             function cambiarEstado(id: string, estado: EstadoAsistencia) {
               setAsistencia((prev) => ({ ...prev, [id]: estado }));
+              setAsistenciaDirty(true);
             }
             function cargarFecha(fecha: string) {
               const d = new Date(fecha + 'T00:00:00');
               if (d.getDay() === 0 || d.getDay() === 6) return;
               setFechaAsistencia(fecha);
-              try {
-                const stored = localStorage.getItem(ASISTENCIA_STORAGE_PREFIX + cursoKey + '-' + fecha);
-                setAsistencia(stored ? JSON.parse(stored) : {});
-              } catch {
-                setAsistencia({});
-              }
+              cargarAsistencia(fecha);
             }
+            const colorMap: Record<EstadoAsistencia, string> = {
+              PRESENTE: 'border-green-300 bg-green-50 text-green-700',
+              TARDANZA: 'border-amber-300 bg-amber-50 text-amber-700',
+              FALTA: 'border-red-300 bg-red-50 text-red-700',
+            };
             return (
               <div className="flex flex-col gap-4">
                 {/* Selector de fecha */}
@@ -492,20 +518,34 @@ export function SidebarCurso({ curso, isOpen, onClose }: Props) {
                 </div>
 
                 {/* Lista de estudiantes */}
-                {estudiantes.length === 0 ? (
+                {cargandoAsistencia ? (
+                  <p className="py-8 text-center text-sm text-gray-400">Cargando estudiantes...</p>
+                ) : estudiantes.length === 0 ? (
                   <p className="py-8 text-center text-sm text-gray-400">No hay estudiantes en este curso</p>
                 ) : (
                   <div className="flex flex-col gap-2">
                     {estudiantes.map((est) => {
-                      const estado = asistencia[est.id] || 'ASISTIO';
+                      const estado = asistencia[est.estudianteId] || 'PRESENTE';
                       return (
                         <div
-                          key={est.id}
+                          key={est.estudianteId}
                           className="flex items-center gap-3 rounded-xl border border-gray-200 px-4 py-3"
                         >
                           {/* Avatar + Nombre (click → historial) */}
                           <button
-                            onClick={() => setEstudianteHistorial(est)}
+                              onClick={async () => {
+                                setEstudianteHistorial(est);
+                                try {
+                                  const anio = new Date().getFullYear();
+                                  const { http } = await import('../api/http');
+                                  const { data } = await http.get<{ fecha: string; estado: EstadoAsistencia | null }[]>(
+                                    `/api/asistencia/estudiante/${est.estudianteId}`, { params: { anioEscolar: anio } }
+                                  );
+                                  setHistorialAsistencia(data);
+                                } catch {
+                                  setHistorialAsistencia([]);
+                                }
+                              }}
                             className="flex items-center gap-3 min-w-0 flex-1 text-left"
                           >
                             <div
@@ -521,17 +561,12 @@ export function SidebarCurso({ curso, isOpen, onClose }: Props) {
                           {/* Select */}
                           <select
                             value={estado}
-                            onChange={(e) => cambiarEstado(est.id, e.target.value as EstadoAsistencia)}
-                            className={`rounded-lg border px-3 py-1.5 text-xs font-medium outline-none
-                              ${estado === 'ASISTIO' ? 'border-green-300 bg-green-50 text-green-700' : ''}
-                              ${estado === 'FALTO' ? 'border-red-300 bg-red-50 text-red-700' : ''}
-                              ${estado === 'JUSTIFICADO' ? 'border-blue-300 bg-blue-50 text-blue-700' : ''}
-                              ${estado === 'TARDANZA' ? 'border-amber-300 bg-amber-50 text-amber-700' : ''}`}
+                            onChange={(e) => cambiarEstado(est.estudianteId, e.target.value as EstadoAsistencia)}
+                            className={`rounded-lg border px-3 py-1.5 text-xs font-medium outline-none ${colorMap[estado]}`}
                           >
-                            <option value="ASISTIO">Asistió</option>
-                            <option value="FALTO">Faltó</option>
-                            <option value="JUSTIFICADO">Justificado</option>
+                            <option value="PRESENTE">Presente</option>
                             <option value="TARDANZA">Tardanza</option>
+                            <option value="FALTA">Falta</option>
                           </select>
                         </div>
                       );
@@ -543,7 +578,7 @@ export function SidebarCurso({ curso, isOpen, onClose }: Props) {
           })()}
 
           {tab === 'calificaciones' && (() => {
-            const estudiantes = getEstudiantesCurso();
+            const ests = estudiantes;
             function promedioEstudiante(estId: string): number {
               const acts = actividades;
               const notas = acts.map((a) => calificaciones[`${estId}-${a.id}`]).filter((n) => n !== undefined);
@@ -557,15 +592,15 @@ export function SidebarCurso({ curso, isOpen, onClose }: Props) {
             }
             return (
               <div className="flex flex-col gap-4">
-                {estudiantes.length === 0 ? (
+                {ests.length === 0 ? (
                   <p className="py-8 text-center text-sm text-gray-400">No hay estudiantes en este curso</p>
                 ) : (
                   <div className="flex flex-col gap-2">
-                    {estudiantes.map((est) => {
-                      const prom = promedioEstudiante(est.id);
+                    {ests.map((est) => {
+                      const prom = promedioEstudiante(est.estudianteId);
                       return (
                         <div
-                          key={est.id}
+                          key={est.estudianteId}
                           className="flex items-center gap-3 rounded-xl border border-gray-200 px-4 py-3"
                         >
                           <button
@@ -606,24 +641,16 @@ export function SidebarCurso({ curso, isOpen, onClose }: Props) {
       />
 
       {estudianteHistorial && (() => {
-        const ESTADOS: EstadoAsistencia[] = ['ASISTIO', 'FALTO', 'JUSTIFICADO', 'TARDANZA'];
-        const historial: { fecha: string; estado: EstadoAsistencia }[] = [];
-        const hoy = new Date();
-        for (let i = 29; i >= 0; i--) {
-          const d = new Date(hoy);
-          d.setDate(d.getDate() - i);
-          if (d.getDay() === 0 || d.getDay() === 6) continue;
-          const dia = String(d.getDate()).padStart(2, '0');
-          const mes = String(d.getMonth() + 1).padStart(2, '0');
-          const anio = d.getFullYear();
-          const fechaStr = `${anio}-${mes}-${dia}`;
-          const idx = (estudianteHistorial.id.charCodeAt(1) + i) % ESTADOS.length;
-          historial.push({ fecha: fechaStr, estado: ESTADOS[idx] });
-        }
+        const est = estudianteHistorial;
+        const colorMap: Record<string, string> = {
+          PRESENTE: 'text-green-700 bg-green-50',
+          TARDANZA: 'text-amber-700 bg-amber-50',
+          FALTA: 'text-red-700 bg-red-50',
+        };
         return (
           <div
             className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4"
-            onClick={() => setEstudianteHistorial(null)}
+            onClick={() => { setEstudianteHistorial(null); setHistorialAsistencia([]); }}
           >
             <div
               className="flex w-full max-w-md flex-col gap-5 rounded-2xl bg-white p-6 shadow-xl"
@@ -632,7 +659,7 @@ export function SidebarCurso({ curso, isOpen, onClose }: Props) {
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-bold text-gray-800">Historial de Asistencia</h3>
                 <button
-                  onClick={() => setEstudianteHistorial(null)}
+                  onClick={() => { setEstudianteHistorial(null); setHistorialAsistencia([]); }}
                   className="text-lg text-gray-400 hover:text-gray-600"
                 >
                   ✕
@@ -644,24 +671,20 @@ export function SidebarCurso({ curso, isOpen, onClose }: Props) {
                   className="flex h-16 w-16 items-center justify-center rounded-full text-xl font-bold text-white"
                   style={{ backgroundColor: curso.color }}
                 >
-                  {estudianteHistorial.nombres.charAt(0)}{estudianteHistorial.apellidos.charAt(0)}
+                  {est.nombres.charAt(0)}{est.apellidos.charAt(0)}
                 </div>
                 <p className="text-base font-semibold text-gray-800">
-                  {estudianteHistorial.nombres} {estudianteHistorial.apellidos}
+                  {est.nombres} {est.apellidos}
                 </p>
               </div>
 
               <hr className="border-gray-100" />
 
               <div className="flex max-h-64 flex-col gap-1 overflow-y-auto">
-                {historial.map((item) => {
-                  const colorMap: Record<EstadoAsistencia, string> = {
-                    ASISTIO: 'text-green-700 bg-green-50',
-                    FALTO: 'text-red-700 bg-red-50',
-                    JUSTIFICADO: 'text-blue-700 bg-blue-50',
-                    TARDANZA: 'text-amber-700 bg-amber-50',
-                  };
-                  return (
+                {historialAsistencia.length === 0 ? (
+                  <p className="py-6 text-center text-sm text-gray-400">Sin registros de asistencia</p>
+                ) : (
+                  historialAsistencia.map((item) => (
                     <div
                       key={item.fecha}
                       className="flex items-center justify-between rounded-lg px-3 py-2"
@@ -674,19 +697,19 @@ export function SidebarCurso({ curso, isOpen, onClose }: Props) {
                           year: 'numeric',
                         })}
                       </span>
-                      <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${colorMap[item.estado]}`}>
-                        {item.estado === 'ASISTIO' && 'Asistió'}
-                        {item.estado === 'FALTO' && 'Faltó'}
-                        {item.estado === 'JUSTIFICADO' && 'Justificado'}
+                      <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${item.estado ? colorMap[item.estado] ?? 'text-gray-500 bg-gray-100' : 'text-gray-400 bg-gray-100'}`}>
+                        {item.estado === 'PRESENTE' && 'Presente'}
                         {item.estado === 'TARDANZA' && 'Tardanza'}
+                        {item.estado === 'FALTA' && 'Falta'}
+                        {!item.estado && 'Sin registro'}
                       </span>
                     </div>
-                  );
-                })}
+                  ))
+                )}
               </div>
 
               <button
-                onClick={() => setEstudianteHistorial(null)}
+                onClick={() => { setEstudianteHistorial(null); setHistorialAsistencia([]); }}
                 className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
               >
                 Cerrar
@@ -701,7 +724,7 @@ export function SidebarCurso({ curso, isOpen, onClose }: Props) {
         const acts = actividades;
         const GRUPOS_CALIF: TipoActividad[] = ['PRACTICA', 'EXAMEN', 'TRABAJO_GRUPAL'];
         function promedio(): number {
-          const notas = acts.map((a) => calificaciones[`${est.id}-${a.id}`]).filter((n) => n !== undefined);
+          const notas = acts.map((a) => calificaciones[`${est.estudianteId}-${a.id}`]).filter((n) => n !== undefined);
           if (notas.length === 0) return 0;
           return notas.reduce((s, n) => s + n, 0) / notas.length;
         }
@@ -759,7 +782,7 @@ export function SidebarCurso({ curso, isOpen, onClose }: Props) {
                       </p>
                       <div className="flex flex-col gap-1.5">
                         {items.map((act) => {
-                          const key = `${est.id}-${act.id}`;
+                          const key = `${est.estudianteId}-${act.id}`;
                           const nota = calificaciones[key] ?? 0;
                           return (
                             <div

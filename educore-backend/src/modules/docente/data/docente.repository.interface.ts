@@ -14,6 +14,7 @@ export interface AsignacionResumen {
   id: string;
   cursoNombre: string;
   gradoNombre: string;
+  seccionId: string;
   seccionNombre: string;
 }
 
