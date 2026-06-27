@@ -16,7 +16,7 @@ const cursos: Curso[] = [
 
 const opcionesPagina = [8, 12, 24];
 
-export function MisCursosPage() {
+export function CursosEstudiantePage() {
   const [busqueda, setBusqueda] = useState('');
   const [modo, setModo] = useState<'grid' | 'lista'>('grid');
   const [porPagina, setPorPagina] = useState(12);
