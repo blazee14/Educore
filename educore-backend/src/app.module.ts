@@ -8,6 +8,8 @@ import { MatriculaModule } from './modules/matricula/matricula.module';
 import { AcademicoModule } from './modules/academico/academico.module';
 import { TutorModule } from './modules/tutor/tutor.module';
 import { AsistenciaModule } from './modules/asistencia/asistencia.module';
+import { DocenteModule } from './modules/docente/docente.module';
+
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -18,7 +20,7 @@ import { AsistenciaModule } from './modules/asistencia/asistencia.module';
     AcademicoModule,
     TutorModule,
     AsistenciaModule,
-    // Aquí se irán agregando MatriculaModule, AcademicoModule, etc.
+    DocenteModule,
   ],
 })
 export class AppModule {}

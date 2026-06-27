@@ -25,7 +25,7 @@ import { CursosEstudiantePage } from './pages/estudiante/MisCursosPage';
 import { TutorLayout } from './layouts/TutorLayout';
 import { TutorDashboardPage } from './pages/tutor/TutorDashboardPage';
 import { AsistenciaAdminPage } from './pages/admin/AsistenciaAdminPage';
-
+import { AsistenciaDirectorPage } from './pages/director/AsistenciaDirectorPage';
 
 import { DocenteLayout } from './layouts/DocenteLayout';
 import { DashboardDocentePage } from './pages/docente/DashboardDocentePage';
@@ -120,6 +120,11 @@ export function App() {
               path="estudiantes"
               element={<EstudiantesRegistradosPage />}
               handle={{ titulo: 'Estudiantes registrados', subtitulo: 'Listado y perfiles de estudiantes' }}
+            />
+            <Route
+              path="asistencia"
+              element={<AsistenciaDirectorPage />}
+              handle={{ titulo: 'Asistencia', subtitulo: 'Reportes de asistencia' }}
             />
             {/* Los demás módulos del sidebar de Dirección quedan pendientes */}
           </Route>

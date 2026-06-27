@@ -62,6 +62,7 @@ model Usuario {
   auditLogs       AuditLog[]
   estudiante      Estudiante?
   tutor           Tutor?
+  docente         Docente?
 
   @@map("usuario")
 }
@@ -152,9 +153,10 @@ model Seccion {
   gradoId     String @map("grado_id")
   anioEscolar Int    @map("anio_escolar")
 
-  grado      Grado       @relation(fields: [gradoId], references: [id], onDelete: Cascade)
-  matriculas Matricula[]
-  asistencias Asistencia[]
+  grado                Grado                 @relation(fields: [gradoId], references: [id], onDelete: Cascade)
+  matriculas           Matricula[]
+  asistencias          Asistencia[]
+  asignacionesDocentes DocenteCursoSeccion[]
 
   @@unique([gradoId, nombre, anioEscolar])
   @@map("seccion")
@@ -172,4 +174,43 @@ model Matricula {
   seccion    Seccion    @relation(fields: [seccionId], references: [id], onDelete: Restrict)
 
   @@map("matricula")
+}
+
+model Curso {
+  id     String         @id @default(uuid())
+  nombre String
+  nivel  NivelEducativo
+
+  asignaciones DocenteCursoSeccion[]
+
+  @@map("curso")
+}
+
+model Docente {
+  id        String   @id @default(uuid())
+  usuarioId String   @unique @map("usuario_id")
+  nombres   String
+  apellidos String
+  dni       String   @unique
+  telefono  String?
+  creadoEn  DateTime @default(now()) @map("creado_en")
+
+  usuario      Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  asignaciones DocenteCursoSeccion[]
+
+  @@map("docente")
+}
+
+model DocenteCursoSeccion {
+  id        String @id @default(uuid())
+  docenteId String @map("docente_id")
+  cursoId   String @map("curso_id")
+  seccionId String @map("seccion_id")
+
+  docente Docente @relation(fields: [docenteId], references: [id], onDelete: Cascade)
+  curso   Curso   @relation(fields: [cursoId], references: [id], onDelete: Cascade)
+  seccion Seccion @relation(fields: [seccionId], references: [id], onDelete: Cascade)
+
+  @@unique([docenteId, cursoId, seccionId])
+  @@map("docente_curso_seccion")
 }

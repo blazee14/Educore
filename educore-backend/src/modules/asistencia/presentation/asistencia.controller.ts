@@ -40,7 +40,7 @@ export class AsistenciaController {
   }
 
   @Get('seccion/:seccionId')
-  @Roles('DOCENTE', 'ADMIN')
+  @Roles('DOCENTE', 'ADMIN', 'DIRECTOR')
   listarPorSeccion(@Param('seccionId') seccionId: string, @Query('fecha') fecha: string) {
     return this.asistenciaService.listarPorSeccion(seccionId, fecha);
   }

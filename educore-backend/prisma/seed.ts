@@ -79,6 +79,15 @@ async function main() {
     }
   }
 
+  const cursosBase = ['Matemática', 'Comunicación', 'Ciencia y Tecnología', 'Inglés', 'Educación Física'];
+  for (const nombre of cursosBase) {
+    await prisma.curso.upsert({
+      where: { id: `curso-${nombre.toLowerCase().replace(/\s/g, '-')}` },
+      update: {},
+      create: { id: `curso-${nombre.toLowerCase().replace(/\s/g, '-')}`, nombre, nivel: 'SECUNDARIA' },
+    });
+  }
+  
   console.log('Usuarios de prueba creados. Contraseña para ambos: Password123!');
   console.log('Grados y secciones del año', ANIO_ESCOLAR_ACTUAL, 'creados.');
 }
