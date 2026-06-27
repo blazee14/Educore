@@ -21,9 +21,16 @@ import { MiPerfilPage } from './pages/estudiante/MiPerfilPage';
 import { MiMatriculaPage } from './pages/estudiante/MiMatriculaPage';
 import { EnConstruccion as EnConstruccionEst } from './pages/estudiante/EnConstruccion';
 import { CalendarioPage } from './pages/estudiante/CalendarioPage';
-import { MisCursosPage } from './pages/estudiante/MisCursosPage';
+import { CursosEstudiantePage } from './pages/estudiante/MisCursosPage';
 import { TutorLayout } from './layouts/TutorLayout';
 import { TutorDashboardPage } from './pages/tutor/TutorDashboardPage';
+
+import { DocenteLayout } from './layouts/DocenteLayout';
+import { DashboardDocentePage } from './pages/docente/DashboardDocentePage';
+import { EnConstruccion as EnConstruccionDoc } from './pages/docente/EnConstruccion';
+import { CursosDocentePage } from './pages/docente/MisCursosPage';
+import { EstudiantesDocentePage } from './pages/docente/EstudiantesDocentePage';
+import { HorarioDocentePage } from './pages/docente/HorarioDocentePage';
 
 // path -> { titulo, subtitulo } que el Topbar muestra (sección 6 del informe: un módulo por sidebar item)
 const seccionesEnConstruccion: { path: string; titulo: string; subtitulo: string }[] = [
@@ -148,7 +155,7 @@ export function App() {
             />
             <Route
               path="cursos"
-              element={<MisCursosPage />}
+              element={<CursosEstudiantePage />}
               handle={{ titulo: 'Mis Cursos', subtitulo: 'Cursos y horarios' }}
             />
             <Route
@@ -170,6 +177,67 @@ export function App() {
               path="biblioteca"
               element={<EnConstruccionEst nombre="Biblioteca Digital" />}
               handle={{ titulo: 'Biblioteca Digital', subtitulo: 'Recursos y materiales de estudio' }}
+            />
+          </Route>
+
+          {/* ---------- DOCENTE ---------- */}
+          <Route
+            path="/docente"
+            element={
+              <RutaPrivada>
+                <DocenteLayout />
+              </RutaPrivada>
+            }
+          >
+            <Route
+              index
+              element={<DashboardDocentePage />}
+              handle={{ titulo: 'Dashboard', subtitulo: 'Bienvenido(a), Docente' }}
+            />
+            <Route
+              path="cursos"
+              element={<CursosDocentePage />}
+              handle={{ titulo: 'Cursos', subtitulo: 'Gestión de cursos asignados' }}
+            />
+            <Route
+              path="estudiantes"
+              element={<EstudiantesDocentePage />}
+              handle={{ titulo: 'Estudiantes', subtitulo: 'Listado de estudiantes' }}
+            />
+            <Route
+              path="horario"
+              element={<HorarioDocentePage />}
+              handle={{ titulo: 'Horario', subtitulo: 'Horario de clases' }}
+            />
+            <Route
+              path="notas"
+              element={<EnConstruccionDoc nombre="Notas" />}
+              handle={{ titulo: 'Notas', subtitulo: 'Registro de notas' }}
+            />
+            <Route
+              path="asistencia"
+              element={<EnConstruccionDoc nombre="Asistencia" />}
+              handle={{ titulo: 'Asistencia', subtitulo: 'Registro de asistencia' }}
+            />
+            <Route
+              path="comunicados"
+              element={<EnConstruccionDoc nombre="Comunicados" />}
+              handle={{ titulo: 'Comunicados', subtitulo: 'Avisos y comunicados' }}
+            />
+            <Route
+              path="mensajeria"
+              element={<EnConstruccionDoc nombre="Mensajería" />}
+              handle={{ titulo: 'Mensajería', subtitulo: 'Mensajería interna' }}
+            />
+            <Route
+              path="perfil"
+              element={<EnConstruccionDoc nombre="Perfil" />}
+              handle={{ titulo: 'Perfil', subtitulo: 'Datos personales' }}
+            />
+            <Route
+              path="configuracion"
+              element={<EnConstruccionDoc nombre="Configuración" />}
+              handle={{ titulo: 'Configuración', subtitulo: 'Configuración del sistema' }}
             />
           </Route>
 

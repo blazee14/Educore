@@ -34,4 +34,15 @@ export const routeMeta: Record<string, RouteMeta> = {
   '/estudiante/calendario': { titulo: 'Calendario', subtitulo: 'Calendario académico y fechas importantes' },
   '/estudiante/tareas': { titulo: 'Tareas', subtitulo: 'Tareas y asignaciones pendientes' },
   '/estudiante/biblioteca': { titulo: 'Biblioteca Digital', subtitulo: 'Recursos y materiales de estudio' },
+
+  '/docente': { titulo: 'Dashboard', subtitulo: 'Bienvenido(a), Docente' },
+  '/docente/cursos': { titulo: 'Cursos', subtitulo: 'Gestión de cursos asignados' },
+  '/docente/estudiantes': { titulo: 'Estudiantes', subtitulo: 'Listado de estudiantes' },
+  '/docente/horario': { titulo: 'Horario', subtitulo: 'Horario de clases' },
+  '/docente/notas': { titulo: 'Notas', subtitulo: 'Registro de notas' },
+  '/docente/asistencia': { titulo: 'Asistencia', subtitulo: 'Registro de asistencia' },
+  '/docente/comunicados': { titulo: 'Comunicados', subtitulo: 'Avisos y comunicados' },
+  '/docente/mensajeria': { titulo: 'Mensajería', subtitulo: 'Mensajería interna' },
+  '/docente/perfil': { titulo: 'Perfil', subtitulo: 'Datos personales' },
+  '/docente/configuracion': { titulo: 'Configuración', subtitulo: 'Configuración del sistema' },
 };
