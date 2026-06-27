@@ -20,3 +20,15 @@ export async function seccionesDisponibles(anioEscolar: number): Promise<GradoCo
   });
   return data;
 }
+
+export interface Curso {
+  id: string;
+  nombre: string;
+  nivel: 'PRIMARIA' | 'SECUNDARIA';
+}
+
+// GET /api/academico/cursos
+export async function listarCursos(): Promise<Curso[]> {
+  const { data } = await http.get<Curso[]>('/api/academico/cursos');
+  return data;
+}
