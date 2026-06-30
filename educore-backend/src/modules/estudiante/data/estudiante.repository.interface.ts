@@ -41,7 +41,6 @@ export interface EstudianteConDetalle {
   apellidos: string;
   dni: string;
   fechaNacimiento: Date;
-  seccionId: string | null;
   gradoNombre: string | null;
   seccionNombre: string | null;
   tutores: TutorResumen[];

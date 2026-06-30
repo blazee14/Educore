@@ -35,7 +35,7 @@ Un colegio necesita llevar el control de quién está matriculado, en qué secci
 ## Roles y qué puede hacer cada uno
 
 | Rol | Qué puede hacer en el sistema actual |
-|-----|----------------------------------------|
+| --- | ------------------------------------ |
 | **Director** | Ver y registrar matrículas, listar docentes, consultar asistencia por sección o por estudiante |
 | **Admin** | Todo lo del Director, además crear/editar estudiantes y docentes, asignar cursos a docentes, resetear contraseñas, eliminar matrículas |
 | **Docente** | Ver sus cursos/secciones asignadas, registrar asistencia de su sección, listar sus estudiantes |
@@ -49,7 +49,7 @@ El acceso a cada endpoint está controlado por rol mediante guards, no solo ocul
 ## Módulos del sistema
 
 | Módulo | Descripción | Roles | Estado |
-|--------|-------------|-------|--------|
+| ------ | ----------- | ----- | ------ |
 | **Auth** | Login, JWT, 2FA opcional por código de 6 dígitos, refresh token, logout | Todos | ✅ Implementado |
 | **Estudiante** | Perfil propio, listado, edición, reseteo de contraseña | Admin, Docente | ✅ Implementado |
 | **Docente** | Alta, listado, asignación a curso/sección, "mis asignaciones" | Admin, Director | ✅ Implementado |
@@ -71,7 +71,7 @@ El acceso a cada endpoint está controlado por rol mediante guards, no solo ocul
 El informe técnico evaluó cuatro enfoques arquitectónicos antes de decidir:
 
 | Opción | Veredicto | Motivo |
-|--------|-----------|--------|
+| ------ | --------- | ------ |
 | Monolítico tradicional (sin capas) | ❌ Descartado | Sin separación de responsabilidades; un bug puede romper todo el sistema |
 | **N-Layer Architecture** | ✅ **Elegido** | Separación clara por capas, bajo costo de infraestructura (un solo proceso), control total por capa |
 | Microservicios | ❌ Descartado | Complejidad operacional y costo de infraestructura excesivos para el tamaño del proyecto (requeriría Docker, Kubernetes, API Gateway) |
@@ -79,17 +79,17 @@ El informe técnico evaluó cuatro enfoques arquitectónicos antes de decidir:
 
 El backend sigue **N-Layer** aplicada *dentro de cada módulo* (no como carpetas globales del proyecto). Cada módulo de `src/modules/<nombre>/` tiene esta forma:
 
-```
+```text
 <modulo>/
 ├── presentation/   → Controller + DTOs. Recibe HTTP, valida con class-validator. No conoce SQL ni reglas de negocio.
 ├── business/       → Service + excepciones propias. Toda la lógica de negocio vive aquí. No conoce HTTP ni SQL.
-├── data/            → Interfaz de repositorio (contrato) + implementación con Prisma. No conoce reglas de negocio.
-└── domain/          → Entidad de dominio (DDD): el modelo de negocio, independiente del ORM.
+├── data/           → Interfaz de repositorio (contrato) + implementación con Prisma. No conoce reglas de negocio.
+└── domain/         → Entidad de dominio (DDD): el modelo de negocio, independiente del ORM.
 ```
 
 **Regla de comunicación (la más importante de N-Layer):** el flujo siempre va hacia abajo, nunca al revés ni saltando capas:
 
-```
+```text
 Presentación → Negocio → Datos
 ```
 
@@ -111,6 +111,7 @@ El informe también evaluó Clean Architecture / Hexagonal como alternativa. La 
 ### Clean Code y SOLID
 
 El informe define estándares de escritura aplicados en todas las capas:
+
 - **Nombres significativos** (`calcularPromedioFinal()` en vez de `calc()`)
 - **Funciones pequeñas, una sola responsabilidad** (máx. ~20 líneas como guía)
 - **Sin números mágicos** (`UMBRAL_INASISTENCIAS = 0.30` en vez de `0.30` suelto en un `if`)
@@ -125,7 +126,7 @@ Los cinco principios **SOLID** se aplican en la capa de Negocio y en las interfa
 DDD (Domain-Driven Design) es el enfoque central de la capa de Negocio: el código debe reflejar el lenguaje del colegio, no al revés. Conceptos clave aplicados:
 
 | Concepto DDD | Ejemplo en EduCore |
-|--------------|---------------------|
+| ------------ | ------------------- |
 | Entidad | `Estudiante`, `Pago`, `Matrícula` (tienen identidad propia) |
 | Value Object | DNI, Promedio Bimestral (sin identidad, definidos por sus atributos) |
 | Aggregate | `Matrícula` (trata Estudiante + Sección + Año Escolar como una unidad transaccional) |
@@ -135,7 +136,7 @@ DDD (Domain-Driven Design) es el enfoque central de la capa de Negocio: el códi
 Además de DDD, el informe define estos patrones para problemas concretos del dominio:
 
 | Patrón | Problema que resuelve | Estado |
-|--------|------------------------|--------|
+| ------ | ---------------------- | ------ |
 | **Repository** | Separar acceso a datos de la lógica de negocio (en vez de Active Record, que acopla el modelo a la BD) | ✅ Implementado en todos los módulos |
 | **Factory** | Crear un usuario que puede ser estudiante, docente o tutor, cada uno con reglas distintas, sin if/else inmanejables | 🔜 Roadmap |
 | **Strategy** | El cálculo de promedio varía (bimestral, ponderado por créditos, anual) sin tocar el servicio completo | 🔜 Roadmap |
@@ -170,7 +171,7 @@ Todas las claves primarias son UUID. Los nombres de tabla/columna están mapeado
 
 ## Autenticación y seguridad
 
-### Implementado
+### Medidas implementadas
 
 - **JWT de corta duración** (`accessToken`, 15 min) + **refresh token** de 7 días.
 - El refresh token **no es un JWT**: es un valor aleatorio (`crypto.randomBytes(48)`) guardado **hasheado con SHA-256** en `sesion_refresh_token`. Así, aunque alguien accediera a la base de datos, no podría reconstruir el token original.
@@ -184,7 +185,7 @@ Todas las claves primarias son UUID. Los nombres de tabla/columna están mapeado
 ### Planeado (según el informe, sección 7)
 
 | Área | Medida planeada |
-|------|-------------------|
+| ---- | --------------- |
 | Rate limiting | `@nestjs/throttler`: 100 req/min por IP, 300 req/min autenticado |
 | Datos sensibles | Encriptación en tránsito (TLS) y en reposo (`pgcrypto` para DNI y datos financieros) |
 | Auditoría | Ampliar `audit_log` a modificación de notas, pagos y acceso a datos sensibles |
@@ -197,7 +198,7 @@ Todas las claves primarias son UUID. Los nombres de tabla/columna están mapeado
 ### Implementado
 
 | Capa | Tecnología |
-|------|------------|
+| ---- | ---------- |
 | Backend | NestJS (Node.js + TypeScript) |
 | Base de datos | Prisma ORM sobre PostgreSQL 16 |
 | Validación | `class-validator` / `class-transformer` |
@@ -215,7 +216,7 @@ Todas las claves primarias son UUID. Los nombres de tabla/columna están mapeado
 
 ## Estructura del repositorio
 
-```
+```text
 Educore/
 ├── educore-backend/
 │   ├── prisma/
@@ -224,7 +225,7 @@ Educore/
 │   │   └── seed.ts             # Datos iniciales de prueba
 │   └── src/
 │       ├── common/             # Guards, decorators (@Roles) y JwtStrategy compartidos
-│       ├── prisma/              # PrismaService global (conexión única)
+│       ├── prisma/             # PrismaService global (conexión única)
 │       └── modules/
 │           ├── auth/
 │           ├── estudiante/
@@ -237,12 +238,12 @@ Educore/
 │
 └── educore-frontend/
     └── src/
-        ├── api/                 # http.ts (cliente Axios + interceptor), un *.api.ts por módulo
-        ├── components/          # TextField, RutaPrivada, tarjetas de curso, modales
-        ├── context/             # AuthContext, TutorContext
-        ├── layouts/             # Layout + Sidebar por rol (Admin, Director, Docente, Estudiante, Tutor)
-        ├── config/              # Definición de navegación por rol
-        └── pages/                # Páginas agrupadas por rol
+        ├── api/                # http.ts (cliente Axios + interceptor), un *.api.ts por módulo
+        ├── components/         # TextField, RutaPrivada, tarjetas de curso, modales
+        ├── context/            # AuthContext, TutorContext
+        ├── layouts/            # Layout + Sidebar por rol (Admin, Director, Docente, Estudiante, Tutor)
+        ├── config/             # Definición de navegación por rol
+        └── pages/              # Páginas agrupadas por rol
 ```
 
 ---
@@ -250,6 +251,7 @@ Educore/
 ## Instalación y uso local
 
 ### Requisitos previos
+
 - Node.js 20+
 - PostgreSQL 16
 - npm o pnpm
@@ -283,9 +285,9 @@ La app corre en `http://localhost:5173/login`.
 ### Usuarios de prueba (seed)
 
 | Email | Password | Rol | 2FA |
-|-------|----------|-----|-----|
-| admin@educore.test | Password123! | ADMIN | No |
-| docente@educore.test | Password123! | DOCENTE | Sí (código se devuelve en `codigoDev` en dev) |
+| ----- | -------- | --- | --- |
+| `admin@educore.test` | Password123! | ADMIN | No |
+| `docente@educore.test` | Password123! | DOCENTE | Sí (código se devuelve en `codigoDev` en dev) |
 
 ---
 
@@ -316,16 +318,18 @@ VITE_API_URL=http://localhost:3000
 Todos los endpoints (excepto `/api/auth/*`) requieren el header `Authorization: Bearer <accessToken>` y respetan el rol indicado.
 
 ### Auth
+
 | Método | Endpoint | Descripción |
-|--------|----------|--------------|
+| ------ | -------- | ----------- |
 | POST | `/api/auth/login` | Login. Si tiene 2FA, responde `{ requiere2FA, usuarioId }` en vez de tokens |
 | POST | `/api/auth/2fa/verify` | Completa el login con el código 2FA |
 | POST | `/api/auth/refresh` | Renueva el access token leyendo la cookie httpOnly |
 | POST | `/api/auth/logout` | Revoca la sesión y limpia la cookie |
 
 ### Estudiante
+
 | Método | Endpoint | Rol |
-|--------|----------|-----|
+| ------ | -------- | --- |
 | GET | `/api/estudiantes/me` | ESTUDIANTE |
 | GET | `/api/estudiantes` | ADMIN, DOCENTE |
 | GET | `/api/estudiantes/:id` | ADMIN, DOCENTE |
@@ -333,8 +337,9 @@ Todos los endpoints (excepto `/api/auth/*`) requieren el header `Authorization: 
 | PATCH | `/api/estudiantes/:id/reset-password` | ADMIN |
 
 ### Docente
+
 | Método | Endpoint | Rol |
-|--------|----------|-----|
+| ------ | -------- | --- |
 | GET | `/api/docentes/mis-asignaciones` | DOCENTE |
 | POST | `/api/docentes` | ADMIN |
 | GET | `/api/docentes` | ADMIN, DIRECTOR |
@@ -344,15 +349,17 @@ Todos los endpoints (excepto `/api/auth/*`) requieren el header `Authorization: 
 | DELETE | `/api/docentes/:id` | ADMIN |
 
 ### Tutor
+
 | Método | Endpoint | Rol |
-|--------|----------|-----|
+| ------ | -------- | --- |
 | GET | `/api/tutores/me` | TUTOR |
 | GET | `/api/tutores/me/hijos` | TUTOR |
 | PATCH | `/api/tutores/:id/reset-password` | ADMIN |
 
 ### Matrícula
+
 | Método | Endpoint | Rol |
-|--------|----------|-----|
+| ------ | -------- | --- |
 | GET | `/api/matricula/mi-matricula` | ESTUDIANTE |
 | POST | `/api/matricula` | DIRECTOR, ADMIN |
 | GET | `/api/matricula` | DIRECTOR, ADMIN |
@@ -361,13 +368,15 @@ Todos los endpoints (excepto `/api/auth/*`) requieren el header `Authorization: 
 | DELETE | `/api/matricula/:id/completo` | ADMIN |
 
 ### Académico
+
 | Método | Endpoint | Rol |
-|--------|----------|-----|
+| ------ | -------- | --- |
 | GET | `/api/academico/secciones-disponibles?anioEscolar=2026` | Cualquier usuario autenticado |
 
 ### Asistencia
+
 | Método | Endpoint | Rol |
-|--------|----------|-----|
+| ------ | -------- | --- |
 | POST | `/api/asistencia` | DOCENTE, ADMIN |
 | GET | `/api/asistencia/mi-asistencia` | ESTUDIANTE |
 | GET | `/api/asistencia/hijo/:estudianteId` | TUTOR |
@@ -380,8 +389,8 @@ Todos los endpoints (excepto `/api/auth/*`) requieren el header `Authorization: 
 
 Visión completa documentada en el Informe Técnico del proyecto, organizada en fases:
 
-| Fase | Duración estimada | Entregables |
-|------|---------------------|-------------|
+| Fase | Duración estimada | Entregables | Estado |
+| ---- | ----------------- | ----------- | ------ |
 | **Fase 1 — Fundación** | Semanas 1-3 | Auth con JWT, login web, CI/CD básico | ✅ Completada |
 | **Fase 2 — Core Académico** | Semanas 4-8 | Académico, Matrícula, Dashboard, Asistencia con alertas | ✅ Completada (lo que hay en este repo) |
 | **Fase 3 — Pagos y Comunicación** | Semanas 9-13 | Módulo Pagos, recibos PDF, Domain Events, Comunicados, app móvil básica | 🔜 Próxima |
@@ -392,7 +401,7 @@ Visión completa documentada en el Informe Técnico del proyecto, organizada en 
 ### Infraestructura planeada para fases futuras
 
 | Componente | Elegido | Por qué (resumen) |
-|------------|---------|----------------------|
+| ---------- | ------- | ------------------ |
 | Caché y sesiones | Redis | Sub-milisegundo en lecturas, pub/sub, soporte nativo en NestJS (vs. Memcached, que no soporta estructuras complejas) |
 | Almacenamiento de archivos | MinIO (self-hosted, compatible S3) | Control total de los datos del colegio, gratis, 100% compatible con SDK de AWS S3 si se migra después |
 | CI/CD | GitHub Actions | Integración nativa con el repo, pipelines como código, sin servidor adicional que mantener |
@@ -400,6 +409,7 @@ Visión completa documentada en el Informe Técnico del proyecto, organizada en 
 | Frontend móvil | React Native + Expo | Comparte ~70% del código con el frontend web React (vs. Flutter, que usa Dart y no comparte código) |
 
 ### Testing planeado
+
 Jest (unitarios), Playwright (end-to-end), k6 (carga), OWASP ZAP (seguridad) — ninguno implementado todavía en este repositorio.
 
 ---

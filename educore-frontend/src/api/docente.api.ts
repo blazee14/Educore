@@ -1,6 +1,69 @@
 import { http } from './http';
 import type { Curso } from './cursos.api';
-import { listarEstudiantes, type EstudianteConDetalle } from './estudiante.api';
+
+export interface AsignacionResumen {
+  id: string;
+  cursoNombre: string;
+  gradoNombre: string;
+  seccionNombre: string;
+}
+
+export interface DocenteConDetalle {
+  id: string;
+  usuarioId: string;
+  email: string;
+  nombres: string;
+  apellidos: string;
+  dni: string;
+  telefono: string | null;
+  asignaciones: AsignacionResumen[];
+}
+
+export interface CrearDocenteInput {
+  email: string;
+  nombres: string;
+  apellidos: string;
+  dni: string;
+  telefono?: string;
+}
+
+export interface CredencialesDocente {
+  docenteId: string;
+  docente: { nombres: string; apellidos: string };
+  credenciales: { email: string; passwordTemporal: string };
+}
+
+// POST /api/docentes
+export async function crearDocente(input: CrearDocenteInput): Promise<CredencialesDocente> {
+  const { data } = await http.post<CredencialesDocente>('/api/docentes', input);
+  return data;
+}
+
+// GET /api/docentes
+export async function listarDocentes(): Promise<DocenteConDetalle[]> {
+  const { data } = await http.get<DocenteConDetalle[]>('/api/docentes');
+  return data;
+}
+
+// POST /api/docentes/:id/asignaciones
+export async function asignarCurso(docenteId: string, cursoId: string, seccionId: string): Promise<DocenteConDetalle> {
+  const { data } = await http.post<DocenteConDetalle>(`/api/docentes/${docenteId}/asignaciones`, { cursoId, seccionId });
+  return data;
+}
+
+// DELETE /api/docentes/:id/asignaciones/:asignacionId
+export async function quitarAsignacion(docenteId: string, asignacionId: string): Promise<void> {
+  await http.delete(`/api/docentes/${docenteId}/asignaciones/${asignacionId}`);
+}
+
+// DELETE /api/docentes/:id
+export async function eliminarDocente(id: string): Promise<void> {
+  await http.delete(`/api/docentes/${id}`);
+}
+
+// ============================================================
+// Funciones DOCENTE (mis cursos, mis estudiantes)
+// ============================================================
 
 export interface AsignacionCurso {
   id: string;
@@ -66,24 +129,46 @@ export async function misAsignaciones(): Promise<CursoConProfesor[]> {
   }));
 }
 
-export interface EstudianteConCursos extends EstudianteConDetalle {
+export interface EstudianteConCursos {
+  id: string;
+  usuarioId: string;
+  email: string;
+  nombres: string;
+  apellidos: string;
+  dni: string;
+  fechaNacimiento: string;
+  gradoNombre: string | null;
+  seccionNombre: string | null;
+  tutores: { id: string; email: string; nombres: string; apellidos: string; telefono: string | null; parentesco: string }[];
   cursos: { nombre: string; color: string; promedio: number; cantidadNotas: number }[];
 }
 
 export async function misEstudiantes(): Promise<EstudianteConCursos[]> {
+  const { listarEstudiantes } = await import('./estudiante.api');
   const [asignaciones, todos] = await Promise.all([misAsignaciones(), listarEstudiantes()]);
-  const seccionIds = new Set(asignaciones.map((a) => a.seccionId));
+  const key = (g: string | null, s: string | null) => `${g}|${s}`;
   const cursosPorSeccion = new Map<string, { nombre: string; color: string }[]>();
   for (const a of asignaciones) {
-    const list = cursosPorSeccion.get(a.seccionId) ?? [];
+    const k = key(a.grado, a.seccion);
+    const list = cursosPorSeccion.get(k) ?? [];
     list.push({ nombre: a.nombre, color: a.color });
-    cursosPorSeccion.set(a.seccionId, list);
+    cursosPorSeccion.set(k, list);
   }
+  const seccionesDocente = new Set(asignaciones.map((a) => key(a.grado, a.seccion)));
   return todos
-    .filter((e) => e.seccionId && seccionIds.has(e.seccionId))
+    .filter((e) => seccionesDocente.has(key(e.gradoNombre, e.seccionNombre)))
     .map((e) => ({
-      ...e,
-      cursos: cursosPorSeccion.get(e.seccionId!)!.map((c) => ({
+      id: e.id,
+      usuarioId: e.usuarioId,
+      email: e.email,
+      nombres: e.nombres,
+      apellidos: e.apellidos,
+      dni: e.dni,
+      fechaNacimiento: e.fechaNacimiento,
+      gradoNombre: e.gradoNombre,
+      seccionNombre: e.seccionNombre,
+      tutores: e.tutores,
+      cursos: cursosPorSeccion.get(key(e.gradoNombre, e.seccionNombre))!.map((c) => ({
         nombre: c.nombre,
         color: c.color,
         promedio: 0,
