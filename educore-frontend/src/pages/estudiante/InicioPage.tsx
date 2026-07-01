@@ -1,11 +1,11 @@
 // src/pages/estudiante/InicioPage.tsx
 import { useEffect, useState } from 'react';
 import { miPerfilEstudiante, type EstudianteConDetalle } from '../../api/estudiante.api';
+import { miAsistencia, type ResumenAsistencia } from '../../api/asistencia.api';
 import { IconBookOpen, IconCheckCircle, IconClipboard, IconChat, IconCalendar } from '../../components/icons';
 
 const statsMock = [
   { icon: <IconBookOpen className="h-5 w-5" />, bg: 'bg-purple-50', color: 'text-purple-500', label: 'Promedio general', valor: '16.2', detalle: 'Buen rendimiento' },
-  { icon: <IconCheckCircle className="h-5 w-5" />, bg: 'bg-green-50', color: 'text-green-500', label: 'Asistencia', valor: '92%', detalle: '28 de 30 días' },
   { icon: <IconClipboard className="h-5 w-5" />, bg: 'bg-orange-50', color: 'text-orange-500', label: 'Tareas pendientes', valor: '2', detalle: 'Ver tareas' },
   { icon: <IconChat className="h-5 w-5" />, bg: 'bg-blue-50', color: 'text-blue-500', label: 'Comunicados', valor: '3', detalle: 'Ver mensajes' },
 ];
@@ -19,13 +19,17 @@ const cursosMock = [
 
 export function InicioPage() {
   const [perfil, setPerfil] = useState<EstudianteConDetalle | null>(null);
+  const [asistencia, setAsistencia] = useState<ResumenAsistencia | null>(null);
   const [cargando, setCargando] = useState(true);
 
   useEffect(() => {
-    miPerfilEstudiante()
-      .then(setPerfil)
-      .catch(() => {})
-      .finally(() => setCargando(false));
+    Promise.all([
+      miPerfilEstudiante().catch(() => null),
+      miAsistencia().catch(() => null),
+    ]).then(([p, a]) => {
+      setPerfil(p);
+      setAsistencia(a);
+    }).finally(() => setCargando(false));
   }, []);
 
   return (
@@ -41,6 +45,14 @@ export function InicioPage() {
             <p className="text-xs text-gray-400">{s.detalle}</p>
           </div>
         ))}
+        <div className="rounded-2xl border border-gray-200 bg-white p-4">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-green-50 text-green-500">
+            <IconCheckCircle className="h-5 w-5" />
+          </div>
+          <p className="mt-3 text-xs text-gray-500">Asistencia</p>
+          <p className="text-xl font-bold text-gray-800">{asistencia ? `${asistencia.porcentajeAsistencia}%` : '--'}</p>
+          <p className="text-xs text-gray-400">{asistencia ? `${asistencia.presentes} de ${asistencia.total} días` : 'Cargando...'}</p>
+        </div>
       </div>
 
       <div className="rounded-2xl border border-gray-200 bg-white p-5">
