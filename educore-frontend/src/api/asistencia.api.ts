@@ -26,6 +26,23 @@ export async function listarAsistenciaPorSeccion(
   return data;
 }
 
+export interface ResumenAsistencia {
+  registros: any[];
+  total: number;
+  presentes: number;
+  tardanzas: number;
+  faltas: number;
+  porcentajeAsistencia: number;
+}
+
+// GET /api/asistencia/mi-asistencia
+export async function miAsistencia(anioEscolar?: number): Promise<ResumenAsistencia> {
+  const { data } = await http.get<ResumenAsistencia>('/api/asistencia/mi-asistencia', {
+    params: anioEscolar ? { anioEscolar } : undefined,
+  });
+  return data;
+}
+
 // POST /api/asistencia
 export async function registrarAsistencia(
   seccionId: string,

@@ -1,22 +1,6 @@
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { IconSearch } from '../../components/icons';
-
-interface EstudianteCurso {
-  nombre: string;
-  color: string;
-  promedio: number;
-  cantidadNotas: number;
-}
-
-interface EstudianteConCursos {
-  id: string;
-  nombres: string;
-  apellidos: string;
-  dni: string;
-  grado: string;
-  seccion: string;
-  cursos: EstudianteCurso[];
-}
+import { misEstudiantes, type EstudianteConCursos } from '../../api/docente.api';
 
 interface FilaTabla {
   estudianteId: string;
@@ -28,89 +12,26 @@ interface FilaTabla {
   cursoNombre: string;
   cursoColor: string;
   promedio: number;
-  cantidadNotas: number;
 }
-
-const estudiantesData: EstudianteConCursos[] = [
-  {
-    id: '1', nombres: 'Juan', apellidos: 'Pérez', dni: '12345678', grado: '3°', seccion: 'A',
-    cursos: [
-      { nombre: 'Matemáticas', color: '#ef4444', promedio: 15.5, cantidadNotas: 8 },
-      { nombre: 'Comunicación', color: '#eab308', promedio: 14.2, cantidadNotas: 6 },
-      { nombre: 'Ciencia y Tecnología', color: '#22c55e', promedio: 16.0, cantidadNotas: 10 },
-      { nombre: 'Personal Social', color: '#f97316', promedio: 13.0, cantidadNotas: 4 },
-    ],
-  },
-  {
-    id: '2', nombres: 'María', apellidos: 'García', dni: '23456789', grado: '3°', seccion: 'A',
-    cursos: [
-      { nombre: 'Matemáticas', color: '#ef4444', promedio: 18.0, cantidadNotas: 8 },
-      { nombre: 'Comunicación', color: '#eab308', promedio: 17.5, cantidadNotas: 6 },
-      { nombre: 'Educación Física', color: '#84cc16', promedio: 20.0, cantidadNotas: 4 },
-    ],
-  },
-  {
-    id: '3', nombres: 'Carlos', apellidos: 'López', dni: '34567890', grado: '3°', seccion: 'B',
-    cursos: [
-      { nombre: 'Matemáticas', color: '#ef4444', promedio: 12.0, cantidadNotas: 6 },
-      { nombre: 'Comunicación', color: '#eab308', promedio: 11.5, cantidadNotas: 5 },
-      { nombre: 'Inglés', color: '#a855f7', promedio: 14.0, cantidadNotas: 4 },
-      { nombre: 'Religión', color: '#7dd3fc', promedio: 16.0, cantidadNotas: 3 },
-    ],
-  },
-  {
-    id: '4', nombres: 'Ana', apellidos: 'Torres', dni: '45678901', grado: '4°', seccion: 'A',
-    cursos: [
-      { nombre: 'Ciencia y Tecnología', color: '#22c55e', promedio: 16.5, cantidadNotas: 10 },
-      { nombre: 'Inglés', color: '#a855f7', promedio: 15.0, cantidadNotas: 6 },
-      { nombre: 'Arte y Cultura', color: '#06b6d4', promedio: 18.0, cantidadNotas: 4 },
-    ],
-  },
-  {
-    id: '5', nombres: 'Luis', apellidos: 'Mendoza', dni: '56789012', grado: '4°', seccion: 'B',
-    cursos: [
-      { nombre: 'Comunicación', color: '#eab308', promedio: 13.0, cantidadNotas: 6 },
-      { nombre: 'Ciencia y Tecnología', color: '#22c55e', promedio: 14.5, cantidadNotas: 8 },
-      { nombre: 'Educación Física', color: '#84cc16', promedio: 17.0, cantidadNotas: 4 },
-    ],
-  },
-  {
-    id: '6', nombres: 'Sofía', apellidos: 'Ríos', dni: '67890123', grado: '5°', seccion: 'A',
-    cursos: [
-      { nombre: 'Matemáticas', color: '#ef4444', promedio: 19.0, cantidadNotas: 10 },
-      { nombre: 'Ciencia y Tecnología', color: '#22c55e', promedio: 18.5, cantidadNotas: 8 },
-      { nombre: 'Arte y Cultura', color: '#06b6d4', promedio: 16.0, cantidadNotas: 4 },
-    ],
-  },
-  {
-    id: '7', nombres: 'Diego', apellidos: 'Castro', dni: '78901234', grado: '3°', seccion: 'A',
-    cursos: [
-      { nombre: 'Matemáticas', color: '#ef4444', promedio: 10.0, cantidadNotas: 6 },
-      { nombre: 'Personal Social', color: '#f97316', promedio: 12.5, cantidadNotas: 4 },
-    ],
-  },
-  {
-    id: '8', nombres: 'Valentina', apellidos: 'Ruiz', dni: '89012345', grado: '5°', seccion: 'B',
-    cursos: [
-      { nombre: 'Comunicación', color: '#eab308', promedio: 16.5, cantidadNotas: 6 },
-      { nombre: 'Inglés', color: '#a855f7', promedio: 14.0, cantidadNotas: 5 },
-      { nombre: 'Religión', color: '#7dd3fc', promedio: 18.0, cantidadNotas: 4 },
-      { nombre: 'Educación Física', color: '#84cc16', promedio: 19.0, cantidadNotas: 4 },
-    ],
-  },
-  {
-    id: '9', nombres: 'Mateo', apellidos: 'Flores', dni: '90123456', grado: '3°', seccion: 'B',
-    cursos: [
-      { nombre: 'Comunicación', color: '#eab308', promedio: 13.5, cantidadNotas: 5 },
-      { nombre: 'Ciencia y Tecnología', color: '#22c55e', promedio: 15.0, cantidadNotas: 7 },
-      { nombre: 'Personal Social', color: '#f97316', promedio: 14.0, cantidadNotas: 4 },
-    ],
-  },
-];
 
 const opcionesPagina = [8, 12, 24];
 
+function useEstudiantes() {
+  const [estudiantes, setEstudiantes] = useState<EstudianteConCursos[]>([]);
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  useEffect(() => {
+    let activo = true;
+    misEstudiantes()
+      .then((data) => { if (activo) { setEstudiantes(data); setCargando(false); } })
+      .catch(() => { if (activo) { setError('No se pudieron cargar los estudiantes.'); setCargando(false); } });
+    return () => { activo = false; };
+  }, []);
+  return { estudiantes, cargando, error };
+}
+
 export function EstudiantesDocentePage() {
+  const { estudiantes, cargando, error } = useEstudiantes();
   const [busqueda, setBusqueda] = useState('');
   const [filtroGrado, setFiltroGrado] = useState('');
   const [filtroSeccion, setFiltroSeccion] = useState('');
@@ -120,26 +41,25 @@ export function EstudiantesDocentePage() {
   const [estudianteSeleccionado, setEstudianteSeleccionado] = useState<EstudianteConCursos | null>(null);
 
   const filas: FilaTabla[] = useMemo(
-    () => estudiantesData.flatMap((e) =>
+    () => estudiantes.flatMap((e) =>
       e.cursos.map((c) => ({
         estudianteId: e.id,
         nombres: e.nombres,
         apellidos: e.apellidos,
         dni: e.dni,
-        grado: e.grado,
-        seccion: e.seccion,
+        grado: e.gradoNombre ?? '',
+        seccion: e.seccionNombre ?? '',
         cursoNombre: c.nombre,
         cursoColor: c.color,
         promedio: c.promedio,
-        cantidadNotas: c.cantidadNotas,
       }))
     ),
-    [],
+    [estudiantes],
   );
 
-  const grados = useMemo(() => [...new Set(estudiantesData.map((e) => e.grado))].sort(), []);
-  const secciones = useMemo(() => [...new Set(estudiantesData.map((e) => e.seccion))].sort(), []);
-  const cursosList = useMemo(() => [...new Set(estudiantesData.flatMap((e) => e.cursos.map((c) => c.nombre)))].sort(), []);
+  const grados = useMemo(() => [...new Set(estudiantes.map((e) => e.gradoNombre).filter(Boolean))].sort() as string[], [estudiantes]);
+  const secciones = useMemo(() => [...new Set(estudiantes.map((e) => e.seccionNombre).filter(Boolean))].sort() as string[], [estudiantes]);
+  const cursosList = useMemo(() => [...new Set(estudiantes.flatMap((e) => e.cursos.map((c) => c.nombre)))].sort(), [estudiantes]);
 
   const filtrados = useMemo(() => {
     let result = filas;
@@ -165,13 +85,32 @@ export function EstudiantesDocentePage() {
   }
 
   function abrirModal(estudianteId: string) {
-    const encontrado = estudiantesData.find((e) => e.id === estudianteId);
+    const encontrado = estudiantes.find((e) => e.id === estudianteId);
     if (encontrado) setEstudianteSeleccionado(encontrado);
   }
 
   const promedioGeneral = estudianteSeleccionado
-    ? (estudianteSeleccionado.cursos.reduce((sum, c) => sum + c.promedio, 0) / estudianteSeleccionado.cursos.length).toFixed(1)
+    ? (estudianteSeleccionado.cursos.reduce((sum, c) => sum + c.promedio, 0) / Math.max(estudianteSeleccionado.cursos.length, 1)).toFixed(1)
     : '0.0';
+
+  if (cargando) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center gap-3 py-20">
+        <p className="text-sm text-red-500">{error}</p>
+        <button onClick={() => window.location.reload()} className="rounded-lg bg-primary px-4 py-2 text-sm text-white hover:bg-primary/90">
+          Reintentar
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-4">
@@ -253,33 +192,29 @@ export function EstudiantesDocentePage() {
               </tr>
             </thead>
             <tbody>
-              {paginados.map((fila) => {
-                const idx = filas.indexOf(fila) + 1;
-                return (
-                  <tr
-                    key={`${fila.estudianteId}-${fila.cursoNombre}`}
-                    onClick={() => abrirModal(fila.estudianteId)}
-                    className="cursor-pointer border-t border-gray-100 transition hover:bg-blue-50/40"
-                  >
-                    <td className="px-4 py-3 text-center text-gray-400">{idx}</td>
-                    <td className="px-4 py-3 font-medium text-gray-700">
-                      {fila.nombres} {fila.apellidos}
-                    </td>
-                    <td className="px-4 py-3 text-gray-600">{fila.dni}</td>
-                    <td className="px-4 py-3 text-gray-600">
-                      {fila.grado} &quot;{fila.seccion}&quot;
-                    </td>
-                    <td className="px-4 py-3 text-gray-700">{fila.cursoNombre}</td>
-                    <td className="px-4 py-3 font-medium text-gray-700">{fila.promedio.toFixed(1)}</td>
-                  </tr>
-                );
-              })}
+              {paginados.map((fila, idx) => (
+                <tr
+                  key={`${fila.estudianteId}-${fila.cursoNombre}`}
+                  onClick={() => abrirModal(fila.estudianteId)}
+                  className="cursor-pointer border-t border-gray-100 transition hover:bg-blue-50/40"
+                >
+                  <td className="px-4 py-3 text-center text-gray-400">{idx + 1 + (pagina - 1) * porPagina}</td>
+                  <td className="px-4 py-3 font-medium text-gray-700">
+                    {fila.nombres} {fila.apellidos}
+                  </td>
+                  <td className="px-4 py-3 text-gray-600">{fila.dni}</td>
+                  <td className="px-4 py-3 text-gray-600">
+                    {fila.grado} &quot;{fila.seccion}&quot;
+                  </td>
+                  <td className="px-4 py-3 text-gray-700">{fila.cursoNombre}</td>
+                  <td className="px-4 py-3 font-medium text-gray-700">{fila.promedio.toFixed(1)}</td>
+                </tr>
+              ))}
             </tbody>
           </table>
         )}
       </div>
 
-      {/* Paginación */}
       {totalPaginas > 1 && (
         <div className="flex items-center justify-center gap-1">
           <button
@@ -330,7 +265,7 @@ export function EstudiantesDocentePage() {
               </button>
             </div>
 
-            {/* Foto / Avatar */}
+            {/* Avatar */}
             <div className="flex justify-center">
               <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary/10">
                 <span className="text-3xl font-bold text-primary">
@@ -349,11 +284,10 @@ export function EstudiantesDocentePage() {
                 DNI: {estudianteSeleccionado.dni}
               </p>
               <p className="text-sm text-gray-500">
-                {estudianteSeleccionado.grado} &quot;{estudianteSeleccionado.seccion}&quot;
+                {estudianteSeleccionado.gradoNombre} &quot;{estudianteSeleccionado.seccionNombre}&quot;
               </p>
             </div>
 
-            {/* Separador */}
             <hr className="border-gray-100" />
 
             {/* Lista de cursos */}
@@ -372,7 +306,7 @@ export function EstudiantesDocentePage() {
                     <div className="flex min-w-0 flex-1 items-center justify-between">
                       <p className="text-sm font-semibold text-gray-800">{c.nombre}</p>
                       <div className="text-right">
-                        <p className="text-sm font-bold text-gray-800">
+                        <p className={`text-sm font-bold ${c.promedio >= 14 ? 'text-green-600' : c.promedio >= 11 ? 'text-amber-600' : 'text-gray-800'}`}>
                           {c.promedio.toFixed(1)}
                         </p>
                         <p className="text-[11px] text-gray-400">{c.cantidadNotas} notas</p>

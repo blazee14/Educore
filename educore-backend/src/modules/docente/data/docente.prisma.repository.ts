@@ -84,6 +84,7 @@ export class DocentePrismaRepository implements IDocenteRepository {
         id: a.id,
         cursoNombre: a.curso.nombre,
         gradoNombre: a.seccion.grado.nombre,
+        seccionId: a.seccion.id,
         seccionNombre: a.seccion.nombre,
       })),
     };

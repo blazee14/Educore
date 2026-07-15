@@ -84,6 +84,13 @@ export class DocenteService {
     const docente = await this.docenteRepository.buscarPorUsuarioId(usuarioId);
     if (!docente) throw new DocenteNoEncontradoException();
     const detalle = await this.docenteRepository.buscarDetallePorId(docente.id);
-    return detalle?.asignaciones ?? [];
+    return {
+      docente: {
+        nombres: detalle?.nombres ?? docente.nombres,
+        apellidos: detalle?.apellidos ?? docente.apellidos,
+        email: detalle?.email ?? '',
+      },
+      asignaciones: detalle?.asignaciones ?? [],
+    };
   }
 }
