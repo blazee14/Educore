@@ -1,4 +1,4 @@
-# EduCore — Sistema de Gestión Educativa
+# EduCore — Sistema de Gestión Educativa En el Perú
 
 EduCore es un sistema de gestión educativa diseñado para digitalizar y automatizar los procesos de una institución de nivel primaria y secundaria: matrícula, seguimiento académico, asistencia, pagos y comunicación institucional.
 
